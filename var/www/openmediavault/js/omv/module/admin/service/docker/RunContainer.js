@@ -705,9 +705,6 @@ Ext.define("OMV.module.admin.service.docker.RunContainer", {
 
     onShowCmd: function(id, success, response) {
         var me = this;
-        // Is this a long running RPC? If yes, then periodically check
-        // if it is still running, otherwise we are finished here and
-        // we can notify listeners and close the window.
         if(me.rpcSetPollStatus) {
             if(!success) {
                 me.unmask();
@@ -733,46 +730,33 @@ Ext.define("OMV.module.admin.service.docker.RunContainer", {
             if(success) {
                 var values = me.getRpcSetParams();
                 me.fireEvent("submit", me, values, response);
-                //me.close();
                 if(response) {
-                    OMV.MessageBox.show({
+                    /*Ext.MessageBox.show({
                         title: _("Full command line"),
-                        msg: ("The command is:" + response),
-                        scope: me,
+                        msg: ("The command is:"),
+                        prompt: true,
+                        value: response,
+                        defaultFocus: response,
                         buttons: Ext.Msg.OK
-                    });
-                    /** var detailsWindow = Ext.create("OMV.workspace.window.Form", {
-                        title: _("Container details"),
-                        //rpcService: "Docker",
-                        //rpcGetMethod: "getDetails",
-                        //rpcGetParams: {
-                          //  id: record.get('id')
-                        //},
-                        width: 800,
-                        height: 700,
-                        hideResetButton: true,
-                        hideCancelButton: true,
-                        okButtonText: _("Close"),
-                        scrollable: false,
-
-                     getFormItems: function() {
-                            var me = this;
-                            //document.write (response);
-                            return [{
-                                xtype: "textareafield",
-                                label: "response",
-                                grow: false,
-                                height: 620,
-                                readOnly: true,
-                                fieldStyle: {
-                                    fontFamily: "courier",
-                                    fontSize: "12px"
-                                }
-                            }];
+                    });*/
+                Ext.create('Ext.window.Window', {
+                    autoShow     : true,
+                    width        : 700,
+                    title        : 'Command line',
+                    items        : [
+                        {
+                            xtype      : 'textfield',
+                            fieldLabel : "Command Line",
+                            width      : 650,
+                            itemId     : 'cmd',
+                            name       : 'cmd',
+                            value      : response
                         }
-                    }).show(); */
+                    ]
+                });
+
+
                     }
-                //Ext.getCmp("dockerContainerGrid").doReload();
             } else {
                 OMV.MessageBox.error(null, response);
                 me.fireEvent("exception", me, response);
@@ -785,10 +769,4 @@ Ext.define("OMV.module.admin.service.docker.RunContainer", {
 
 });
 
-//        OMV.MessageBox.show({
-  //              title: _("Full Command Line"),
-    //            msg: _(response["response"]),
-      //          scope: me,
-        //        buttons: Ext.Msg.OK
-        //});
 

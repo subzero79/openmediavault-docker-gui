@@ -37,6 +37,9 @@ Ext.define("OMV.module.admin.service.docker.RunContainer", {
     closable: true,
     resizable: true,
     buttonAlign: "center",
+    okButtonText: _("Run"),
+    resetButtonText: _("Show Command"),
+    buttonAlign: "center",
     grow: true,
 
     rpcService   : "Docker",
@@ -62,6 +65,7 @@ Ext.define("OMV.module.admin.service.docker.RunContainer", {
     extraargs: "",
     action: "",
     cid: "",
+    what: "",
     name: "",
 
     initComponent: function() {
@@ -578,6 +582,7 @@ Ext.define("OMV.module.admin.service.docker.RunContainer", {
             extraArgs: me.getForm().findField("extraArgs").getValue(),
             hostName: me.getForm().findField("hostName").getValue(),
             timeSync: me.getForm().findField("timeSync").getValue(),
+            what: "run",
             cid: me.cid
         };
         if(me.mode === "remote") {
@@ -651,7 +656,139 @@ Ext.define("OMV.module.admin.service.docker.RunContainer", {
                 me.fireEvent("exception", me, response);
             }
         }
+    },
+
+    onResetButton: function() {
+        var me = this;
+        var params = {
+            image: me.getForm().findField("image").getValue(),
+            restartpolicy: me.getForm().findField("restartpolicy").getValue(),
+            maxretries: me.getForm().findField("maxretries").getValue(),
+            macvlan_network: me.getForm().findField("macvlan_network").getValue(),
+            macvlan_ipaddress: me.getForm().findField("macvlan_ipaddress").getValue(),
+            privileged: me.getForm().findField("privileged").getValue(),
+            networkMode: me.getForm().findField("networkMode").getValue(),
+            portForwards: me.portForwards,
+            envVars: me.envVars,
+            bindMounts: me.bindMounts,
+            containerName: me.getForm().findField("containerName").getValue(),
+            volumes: me.volumes,
+            extraArgs: me.getForm().findField("extraArgs").getValue(),
+            hostName: me.getForm().findField("hostName").getValue(),
+            timeSync: me.getForm().findField("timeSync").getValue(),
+            what: "showcmd",
+            cid: me.cid
+        };
+        if(me.mode === "remote") {
+            var rpcOptions = {
+                scope: me,
+                callback: me.onShowCmd,
+                relayErrors: true,
+                rpcData: {
+                    service: me.rpcService,
+                    method: me.rpcSetMethod || "set",
+                    params: params
+                }
+            };
+            if(me.fireEvent("beforesubmit", me, rpcOptions) === false)
+                return;
+            // Display waiting dialog.
+            me.mask(me.submitMsg);
+            // Execute RPC.
+            OMV.Rpc.request(rpcOptions);
+        } else {
+            var params = me.getRpcSetParams();
+            me.fireEvent("submit", me, params);
+            me.close();
+        }
+    },
+
+    onShowCmd: function(id, success, response) {
+        var me = this;
+        // Is this a long running RPC? If yes, then periodically check
+        // if it is still running, otherwise we are finished here and
+        // we can notify listeners and close the window.
+        if(me.rpcSetPollStatus) {
+            if(!success) {
+                me.unmask();
+                OMV.MessageBox.error(null, response);
+                me.fireEvent("exception", me, response);
+                return;
+            }
+            // Execute RPC.
+            OMV.Rpc.request({
+                scope: me,
+                callback: me.onIsRunning,
+                relayErrors: true,
+                rpcData: {
+                    service: "Exec",
+                    method: "isRunning",
+                    params: {
+                        filename: response
+                    }
+                }
+            });
+        } else {
+            me.unmask();
+            if(success) {
+                var values = me.getRpcSetParams();
+                me.fireEvent("submit", me, values, response);
+                //me.close();
+                if(response) {
+                    OMV.MessageBox.show({
+                        title: _("Full command line"),
+                        msg: ("The command is:" + response),
+                        scope: me,
+                        buttons: Ext.Msg.OK
+                    });
+                    /** var detailsWindow = Ext.create("OMV.workspace.window.Form", {
+                        title: _("Container details"),
+                        //rpcService: "Docker",
+                        //rpcGetMethod: "getDetails",
+                        //rpcGetParams: {
+                          //  id: record.get('id')
+                        //},
+                        width: 800,
+                        height: 700,
+                        hideResetButton: true,
+                        hideCancelButton: true,
+                        okButtonText: _("Close"),
+                        scrollable: false,
+
+                     getFormItems: function() {
+                            var me = this;
+                            //document.write (response);
+                            return [{
+                                xtype: "textareafield",
+                                label: "response",
+                                grow: false,
+                                height: 620,
+                                readOnly: true,
+                                fieldStyle: {
+                                    fontFamily: "courier",
+                                    fontSize: "12px"
+                                }
+                            }];
+                        }
+                    }).show(); */
+                    }
+                //Ext.getCmp("dockerContainerGrid").doReload();
+            } else {
+                OMV.MessageBox.error(null, response);
+                me.fireEvent("exception", me, response);
+            }
+        }
     }
 
+
+
+
 });
+
+//        OMV.MessageBox.show({
+  //              title: _("Full Command Line"),
+    //            msg: _(response["response"]),
+      //          scope: me,
+        //        buttons: Ext.Msg.OK
+        //});
 

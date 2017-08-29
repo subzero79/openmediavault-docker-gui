@@ -582,9 +582,19 @@ class OMVRpcServiceDocker extends ServiceAbstract
         //Add image to command
         $cmd .= "\"" . $params['image'] . "\" 2>&1";
 
+        switch ($params['what']) {
+            case 'cmd':
+                $process = new Process($cmd);
+                $process->execute();
+                break;
+            case "showcmd":
+                return $cmd;
+                break;
+        }
+
+
         //throw new OMVModuleDockerException($cmd);
-        $process = new Process($cmd);
-        $process->execute();
+
 
     }
 

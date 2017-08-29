@@ -28,6 +28,8 @@ Ext.define("OMV.module.admin.service.docker.CreateContainer", {
     closable: true,
     resizable: true,
     buttonAlign: "center",
+    okButtonText: _("Run"),
+    resetButtonText: _("Display run command"),
     grow: true,
 
     rpcService   : "Docker",

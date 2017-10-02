@@ -212,6 +212,7 @@ class OMVModuleDockerUtil
             $tmp = array(
                 "repository" => $repository,
                 "tag" => $tag,
+                "reposplustag" => $repository . ":" . $tag, 
                 "id" => substr($item->Id, 7, 12),
                 "created" => $created,
                 "size" => OMVModuleDockerUtil::bytesToSize($item->VirtualSize)

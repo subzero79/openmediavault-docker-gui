@@ -110,12 +110,27 @@ Ext.define("OMV.module.admin.service.docker.RunContainer", {
             xtype: "fieldset",
             title: _("General"),
             items: [{
-                xtype: "textfield",
+                xtype: "combo",
                 fieldLabel: _("Docker image"),
-                value: me.image,
-                readOnly: true,
                 name: "image",
-                id: "dockerImageName"
+                displayField: "reposplustag",
+                value: me.image,
+                id: "dockerImageName",
+                store: Ext.create("OMV.data.Store", {
+                    autoLoad: true,
+                    model: OMV.data.Model.createImplicit({
+                        fields: [
+                            { name: "reposplustag", type: "string" }
+                        ]
+                    }),
+                    proxy: {
+                        type: "rpc",
+                        rpcData: {
+                            service: "Docker",
+                            method: "getImages"
+                        }
+                    },
+                })
             },{
                 xtype: "textfield",
                 fieldLabel: _("Container name"),

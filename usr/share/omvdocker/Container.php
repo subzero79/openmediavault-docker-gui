@@ -208,12 +208,11 @@ class OMVModuleDockerContainer
      *
      * @param string $id      Id of the new image
      * @param array  $data    An associative array with all containers
-     * @param imt    $apiPort An associative array with all containers
      *
      * @return void
      * @access public
      */
-    public function __construct($id, $data, $apiPort)
+    public function __construct($id, $data)
     {
         $this->_id = $id;
         $now = date("c");
@@ -225,7 +224,7 @@ class OMVModuleDockerContainer
             date("c", $item->Created)
         ) . " ago";
 
-        $url = "http://localhost:" . $apiPort . "/containers/$id/json";
+        $url = "http::/" . "containers/$id/json";
         $response = OMVModuleDockerUtil::doApiCall($url);
         $containerData = json_decode($response);
         $this->_image = $containerData->Config->Image;
@@ -255,9 +254,7 @@ class OMVModuleDockerContainer
         }
         $this->_networkMode = $containerData->HostConfig->NetworkMode;
 
-        $macvlans = OMVModuleDockerUtil::getMacVlanNetworks(
-            $apiPort
-        );
+        $macvlans = OMVModuleDockerUtil::getMacVlanNetworks();
         $macvlans = array_column($macvlans,'name');
         $macvlan_network = $containerData->HostConfig->NetworkMode;
         if (strcmp($this->_networkMode, "default") === 0) {

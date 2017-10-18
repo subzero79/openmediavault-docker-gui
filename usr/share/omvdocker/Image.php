@@ -114,9 +114,8 @@ class OMVModuleDockerImage
      *
      * @param string $id      Id of the new container
      * @param array  $data    Associative array with Image data
-     * @param int    $apiPort Network port used by API calls
      */
-    public function __construct($id, $data, $apiPort)
+    public function __construct($id, $data)
     {
         $now = date("c");
         $this->_id = $id;
@@ -135,7 +134,7 @@ class OMVModuleDockerImage
         ) . " ago";
         $this->_size = OMVModuleDockerUtil::bytesToSize($item->VirtualSize);
 
-        $url = "http://localhost:" . $apiPort . "/images/$id/json";
+        $url = "http::/" . "images/$id/json";
         $response = OMVModuleDockerUtil::doApiCall($url);
 
         $imageData = json_decode($response);

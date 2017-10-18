@@ -26,15 +26,17 @@ case "$1" in
     #Remove deprecated stuff to ensure clean installation
     update-rc.d -f openmediavault-docker-gui remove
     rm -f /etc/init.d/openmediavault-docker-gui
-    sed -i '/### Do not change these lines\. They are added and updated by the OMV Docker GUI plugin\./,$d' /etc/rc.local
+    if [ -f "/etc/rc.local" ];then
+      sed -i '/### Do not change these lines\. They are added and updated by the OMV Docker GUI plugin\./,$d' /etc/rc.local
+    fi
     sed -i '/### Do not change theese lines. They are added and updated by the OMV Docker GUI plugin./,/### End of OMV Docker GUI plugin changes./d' /etc/crontab
     sed -i '/DOCKER_OPTS="$DOCKER_OPTS $OMVDOCKER_API $OMVDOCKER_IMAGE_PATH"/d' /etc/default/docker
 
     #Update systemd daemon and start the Docker service
-    systemctl stop docker.socket
-    systemctl stop docker
-    systemctl daemon-reload
-    systemctl start docker
+    ##systemctl stop docker.socket
+    ##systemctl stop docker
+    ##systemctl daemon-reload
+    ##systemctl start docker
 
     dpkg-trigger update-fixperms
     dpkg-trigger update-locale

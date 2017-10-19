@@ -1,0 +1,46 @@
+#!/bin/sh
+#
+# @license   http://www.gnu.org/licenses/gpl.html GPL Version 3
+# @author    Volker Theile <volker.theile@openmediavault.org>
+# @author    OpenMediaVault Plugin Developers <plugins@omv-extras.org>
+# @copyright Copyright (c) 2009-2013 Volker Theile
+# @copyright Copyright (c) 2013-2017 OpenMediaVault Plugin Developers
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+
+set -e
+
+. /etc/default/openmediavault
+. /usr/share/openmediavault/scripts/helper-functions
+
+OMV_DOCKER_DM_NAME="conf.service.docker"
+DOCKER_DEFAULT_CONF="/etc/default/docker"
+OMVDOCKER_DEFAULT_CONF_HEADER="### Do not change these lines. They are added and updated by the OMV Docker GUI plugin."
+OMVDOCKER_DEFAULT_CONF_FOOTER="### Do not add any configuration below this line. It will be removed when the plugin is removed"
+cleanup() {
+    rm -f "${tmpfile}"
+    exit
+}
+trap cleanup 0 1 2 5 15
+tmpfile=$(mktemp)
+
+OMV_DOCKER_SHAREDFOLDERREF_UUID=$(omv-confdbadm read ${OMV_DOCKER_DM_NAME} | jq -r '.sharedfolderref')
+OMV_DOCKER_SHAREDFOLDER_PATH=$(omv_get_sharedfolder_path ${OMV_DOCKER_SHAREDFOLDERREF_UUID})
+
+echo ${OMVDOCKER_DEFAULT_CONF_HEADER} > ${tmpfile}
+echo "OMVDOCKER_IMAGE_PATH=-g ${OMV_DOCKER_SHAREDFOLDER_PATH}" >> ${tmpfile}
+echo ${OMVDOCKER_DEFAULT_CONF_FOOTER} >> ${tmpfile}
+
+sed -i -e "/${OMVDOCKER_DEFAULT_CONF_HEADER}/r ${tmpfile}" -e "/${OMVDOCKER_DEFAULT_CONF_HEADER}/,/${OMVDOCKER_DEFAULT_CONF_FOOTER}/d" ${DOCKER_DEFAULT_CONF}
+

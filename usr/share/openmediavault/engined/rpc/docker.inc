@@ -1097,13 +1097,14 @@ class OMVRpcServiceDocker extends ServiceAbstract
         );
 
         $dockerVersion = "0";
-        $dockerVersionInfo = "";
+        $dockerVersionTxt = "";
         $cmd = "docker --version 2>&1";
         $process = new Process($cmd);
         $out = $process->execute();
 
         if (!preg_match('/^Docker version.*$/', $out, $matches)) {
-            $dockerVersionInfo = "Docker not installed";
+            $dockerVersionTxt = "Docker not installed";
+            $dockerInfoTxt = "Docker not installed";
         } else {
             $dockerVersion = $matches[1];
             $cmd = "docker version";
@@ -1111,16 +1112,25 @@ class OMVRpcServiceDocker extends ServiceAbstract
             $process = new Process($cmd);
             $process->setQuiet();
             $process->execute($out);
-            $dockerVersionInfo = implode("\n", $out);
+            $dockerVersionTxt = implode("\n", $out);
+
+            unset($cmd,$out);
+            $cmd = "docker info";
+            $process = new Process($cmd);
+            $process->setQuiet();
+            $process->execute($out);
+            $dockerInfoTxt = implode("\n", $out);
+
         }
+
         $settings=$this->database->getAssoc($this->dataModelPath);
 
         //$object["showDanglingImages"] = boolval(
         //$object["showDanglingImages"]);
         $settings["enabled"] = boolval($settings["enabled"]);
-        $settings["apiPort"] = intval($settings["apiPort"]);
-        $settings["version"] = $dockerVersion;
-        $settings["versionInfo"] = $dockerVersionInfo;
+        //To be changed to docker info
+        $settings["dockerInfo"] = $dockerInfoTxt;
+        $settings["dockerVersion"] = $dockerVersionTxt;
         $settings["sharedfolderref"] = $settings["sharedfolderref"];
         $settings["cwarn"] = boolval($settings["cwarn"]);
 
@@ -1135,6 +1145,8 @@ class OMVRpcServiceDocker extends ServiceAbstract
      *
      * @return array $object An associative array with all the new settings
      */
+
+    ///This whole function should be reworked now to work more like a standard plugin, use mkconf to generate conf changes and restart the daemon in the backend
     public function setSettings($params, $context)
     {
         $this->validateMethodContext(
@@ -1147,33 +1159,19 @@ class OMVRpcServiceDocker extends ServiceAbstract
             '"type": "object",' .
             '"properties": {' .
             '"enabled": {   "type": "boolean" },' .
-            '"versionInfo": {   "type": "string" },' .
-            '"version": {   "type": "string" },' .
-            '"apiPort": { "type": "integer" },' .
             '"sharedfolderref": { "type": "string" },' .
-            '"uuid": { "type": "string" },' .
-            '"orgpath": { "type": "string" },' .
-            '"destpath": { "type": "string" },' .
             '"cwarn": { "type": "boolean"}' .
             '}}'
         );
 
-        //Create the folder used for bind mounting when relocating
-        //the base path
-        $cmd = "mkdir -p /var/lib/docker/openmediavault";
-        $process = new Process($cmd);
-        $process->execute();
 
         //Get the old settings object
         $oldSettings = $this->database->getAssoc($this->dataModelPath);
 
-        $newApiPort = $oldSettings['apiPort'];
         $sharedFolder = $oldSettings['sharedfolderref'];
         //Make sure that the plugin is enabled to avoid unnecessary restarts of
         //the docker service.
         if ($params['enabled']) {
-            $newApiPort = $params['apiPort'];
-            $absPath = "";
             $sharedFolder = "";
             if (!(strcmp($params['sharedfolderref'], "") === 0)) {
                 $absPath = Rpc::call(
@@ -1186,7 +1184,7 @@ class OMVRpcServiceDocker extends ServiceAbstract
                 );
                 $sharedFolder = $params['sharedfolderref'];
             }
-            OMVModuleDockerUtil::changeDockerSettings($context, $newApiPort, $absPath);
+            OMVModuleDockerUtil::changeDockerSettings($context, $absPath);
         }
 
         //Get the possibly changed settings object
@@ -1200,9 +1198,7 @@ class OMVRpcServiceDocker extends ServiceAbstract
 
         // Update the configuration object.
         $object = array(
-            "dockermntent" => $tmpMntent,
             "enabled" => array_boolval($params, "enabled"),
-            "apiPort" => $newApiPort,
             "sharedfolderref" => $sharedFolder,
             "cwarn" => array_boolval($params, "cwarn")
         );

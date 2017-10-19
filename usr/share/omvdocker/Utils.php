@@ -236,7 +236,6 @@ class OMVModuleDockerUtil
         foreach (json_decode($response) as $item) {
             $data[substr($item->Id, 7, 12)] = $item;
         }
-        print_r($data);
         return (new OMVModuleDockerImage(substr($data[$id]->Id, 7, 12), $data));
     }
 
@@ -529,6 +528,7 @@ class OMVModuleDockerUtil
             if (strcmp($line, "### Do not change these lines. They are added and updated by the OMV Docker GUI plugin.") === 0) {
                 break;
             } elseif ((preg_match('/^[^\#]+.*\-g[\s]?([^\"]+)[\s]?.*/', $line, $matches)) && (strcmp($absPath, "") !== 0)) {
+                echo "WENT TO ELSEIF";
                 OMVModuleDockerUtil::startDockerService();
                 throw new OMVModuleDockerException(
                     "Docker " .
@@ -544,59 +544,17 @@ class OMVModuleDockerUtil
         // Next get the old settings object
         $oldSettings = self::$database->getAssoc(self::$dataModelPath);
 
-        // Next umount old bind mount
-        if (!(strcmp($oldSettings['dockermntent'], "") === 0)) {
-            $cmd = "mount | grep /var/lib/docker/openmediavault | wc -l";
-            $process = new Process($cmd);
-            $out = $process->execute();
-            while ($out > 0) {
-                $cmd = "umount /var/lib/docker/openmediavault";
-                $process = new Process($cmd);
-                $out = $process->execute();
-                $cmd = "mount | grep /var/lib/docker/openmediavault | wc -l";
-                $process = new Process($cmd);
-                $out = $process->execute();
-            }
-        }
-
         $result = rtrim($result);
         $result .= "\n\n" . '### Do not change these lines. They are added ' .
             'and updated by the OMV Docker GUI plugin.' . "\n";
-        $result .= 'OMVDOCKER_API="-H tcp://127.0.0.1:' . $apiPort .
-            '"' . "\n";
         if (strcmp($absPath, "") !==0) {
-            $result .= 'OMVDOCKER_IMAGE_PATH="-g /var/lib/docker/openmediavault"' . "\n";
+            $result .= 'OMVDOCKER_IMAGE_PATH="-g ' . $absPath . '"' . "\n";
         } else {
             $result .= 'OMVDOCKER_IMAGE_PATH=""' . "\n";
         }
         $result .= '### Do not add any configuration below this line. It will be ' .
             'removed when the plugin is removed';
         file_put_contents("$fileName", $result);
-
-        //Next fix OMV config backend if the base path should be relocated
-        //Start by removing any old mntent entries
-        $mnt = Rpc::call("FsTab", "getByDir", ["dir"=>'/var/lib/docker/openmediavault'],$context);
-        if($mnt){
-            $config = new ConfigObject('conf.system.filesystem.mountpoint');
-            $config->setAssoc($mnt);
-            self::$database->delete($config,TRUE);
-        }
-
-        //Next generate a new mntent entry if a shared folder is specified
-        if (!(strcmp($absPath, "") === 0)) {
-
-            $newMntent = [
-                "uuid" => \OMV\Environment::get("OMV_CONFIGOBJECT_NEW_UUID"),
-                "fsname" => $absPath,
-                "dir" => "/var/lib/docker/openmediavault",
-                "type" => "none",
-                "opts" => "bind,defaults",
-                "freq" => 0,
-                "passno" => 0
-            ];
-
-            $newMntent = Rpc::call("FsTab", "set", $newMntent, $context);
-        }
 
         //Update settings object
         if (strcmp($absPath, "") === 0) {
@@ -605,29 +563,13 @@ class OMVModuleDockerUtil
             $tmpMntent = $newMntent['uuid'];
         }
         $object = array(
-            "dockermntent" => $tmpMntent,
             "enabled" => $oldSettings['enabled'],
-            "apiPort" => $oldSettings['apiPort'],
             "sharedfolderref" => $oldSettings['sharedfolderref']
         );
 
         $config = new ConfigObject(self::$dataModelPath);
         $config->setAssoc($object);
         self::$database->set($config);
-
-        //Re-generate fstab entries
-        $cmd = "export LANG=C; omv-mkconf fstab 2>&1";
-        $process = new Process($cmd);
-        $out = $process->execute();
-
-        // Finally mount the new bind-mount entry
-        if (!(strcmp($absPath, "") === 0)) {
-            //Remount the bind-mount with defaults options
-            $cmd = "export LANG=C; mount -o bind,defaults " .
-                $newMntent['fsname'] . " " . $newMntent['dir'] . " 2>&1";
-            $process = new Process($cmd);
-            $out = $process->execute();
-        }
 
         OMVModuleDockerUtil::startDockerService();
     }

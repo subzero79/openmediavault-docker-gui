@@ -30,16 +30,10 @@ Ext.define("OMV.module.admin.service.docker.Settings", {
     rpcService: "Docker",
     rpcGetMethod: "getSettings",
     rpcSetMethod: "setSettings",
-    plugins: [{
-        ptype: "configobject"
-    }],
-
-    uuid: "",
-
+    
     initComponent : function() {
         this.on("load", function () {
             var me = this;
-            this.uuid = OMV.UUID_UNDEFINED;
             var parent = this.up("tabpanel");
 
             if (!parent) {
@@ -133,12 +127,14 @@ Ext.define("OMV.module.admin.service.docker.Settings", {
                 xtype: "textareafield",
                 name: "dockerVersion",
                 readOnly: true,
+                submitValue: false,
                 grow: true
             },{
                 fieldLabel: "Info",
                 xtype: "textareafield",
                 name: "dockerInfo",
                 readOnly: true,
+                submitValue: false,
                 grow: true
             }]
         },{

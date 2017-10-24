@@ -101,7 +101,11 @@ Ext.define("OMV.module.admin.service.docker.Settings", {
             items: [{
                 xtype: "checkbox",
                 name: "enabled",
-                boxLabel: _("Enable the plugin")
+                boxLabel: _("Enable the plugin"),
+                plugins: [{
+                    ptype: "fieldinfo",
+                    text: _("This setting does not stop/disable or start/enable the docker daemon")
+                }]
             },{
                 xtype: "checkbox",
                 name: "cwarn",

@@ -1146,7 +1146,6 @@ class OMVRpcServiceDocker extends ServiceAbstract
      * @return array $object An associative array with all the new settings
      */
 
-    ///This whole function should be reworked now to work more like a standard plugin, use mkconf to generate conf changes and restart the daemon in the backend
     public function setSettings($params, $context)
     {
         $this->validateMethodContext(
@@ -1167,11 +1166,13 @@ class OMVRpcServiceDocker extends ServiceAbstract
 
         //Get the old settings object
         $oldSettings = $this->database->getAssoc($this->dataModelPath);
+        $oldsharedFolder = $oldSettings['sharedfolderref'];
+        $sharedFolder = $params['sharedfolderref'];
 
-        $sharedFolder = $oldSettings['sharedfolderref'];
-        //Make sure that the plugin is enabled to avoid unnecessary restarts of
-        //the docker service.
-        if ($params['enabled']) {
+//      This will check that if the plugin is enabled and the shared folder reference is different from the current one, will regenerate /etc/default/docker
+//      and restart the daemon. This will prevent restart of the daemon if the user changes the container modification warning setting.
+        if ($params['enabled'] && !(strcmp($params['sharedfolderref'], $oldsharedFolder) === 0)) {
+            $absPath = "";
             $sharedFolder = "";
             if (!(strcmp($params['sharedfolderref'], "") === 0)) {
                 $absPath = Rpc::call(
@@ -1189,12 +1190,6 @@ class OMVRpcServiceDocker extends ServiceAbstract
 
         //Get the possibly changed settings object
         $oldSettings = $this->database->getAssoc($this->dataModelPath);
-
-        if (isset($oldSettings['dockermntent'])) {
-            $tmpMntent = $oldSettings['dockermntent'];
-        } else {
-            $tmpMntent = "";
-        }
 
         // Update the configuration object.
         $object = array(

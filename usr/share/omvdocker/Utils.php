@@ -528,7 +528,6 @@ class OMVModuleDockerUtil
             if (strcmp($line, "### Do not change these lines. They are added and updated by the OMV Docker GUI plugin.") === 0) {
                 break;
             } elseif ((preg_match('/^[^\#]+.*\-g[\s]?([^\"]+)[\s]?.*/', $line, $matches)) && (strcmp($absPath, "") !== 0)) {
-                echo "WENT TO ELSEIF";
                 OMVModuleDockerUtil::startDockerService();
                 throw new OMVModuleDockerException(
                     "Docker " .

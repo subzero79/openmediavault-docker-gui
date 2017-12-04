@@ -212,7 +212,7 @@ class OMVModuleDockerUtil
                 "tag" => $tag,
                 "id" => substr($item->Id, 7, 12),
                 "created" => $created,
-                "size" => OMVModuleDockerUtil::bytesToSize($item->VirtualSize)
+                "size" => $item->VirtualSize
             );
             array_push($objects, $tmp);
         }

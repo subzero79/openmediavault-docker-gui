@@ -579,8 +579,22 @@ class OMVRpcServiceDocker extends ServiceAbstract
             $cmd .= $extraArgs . " ";
         }
 
+        $containerCommand = trim($params['containerCommand']);
+        if(!(strcmp($containerCommand, "") === 0)) {
+          //Store the container command in a container label as omv_docker_container_command
+          $cmd .= "--label omv_docker_container_command=" . "\"" . $containerCommand . "\" ";
+        }
+
         //Add image to command
-        $cmd .= "\"" . $params['image'] . "\" 2>&1";
+        $cmd .= "\"" . $params['image'] . "\" ";
+
+        if(!(strcmp($containerCommand, "") === 0)) {
+          //Add the container command to command
+          $cmd .= $containerCommand . " ";
+        }
+
+        //Add redirection to command
+        $cmd .= "2>&1";
 
         //throw new OMVModuleDockerException($cmd);
         $process = new Process($cmd);
@@ -677,7 +691,8 @@ class OMVRpcServiceDocker extends ServiceAbstract
             "volumes" => $container->getVolumesFrom(),
             "extraargs" => $container->getExtraArgs(),
             "containerName" => $container->getName(),
-            "image" => $container->getImage()
+            "image" => $container->getImage(),
+            "containerCommand" => $container->getContainerCommand()
         );
 
         //Remove existing container
@@ -1015,7 +1030,8 @@ class OMVRpcServiceDocker extends ServiceAbstract
             "extraargs" => $container->getExtraArgs(),
             "hostname" => $container->getHostName(),
             "timesync" => $container->syncsTime(),
-            "imagevolumes" => $image->getVolumes()
+            "imagevolumes" => $image->getVolumes(),
+            "containercommand" => $container->getContainerCommand()
         );
         return $object;
     }
@@ -1704,7 +1720,7 @@ class OMVRpcServiceDocker extends ServiceAbstract
     }
 
     //throw new OMVModuleDockerException($cmd);
-    
+
     /**
      * Connect the selected container to a specific docker network
      *

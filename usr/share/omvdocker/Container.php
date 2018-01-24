@@ -279,8 +279,8 @@ class OMVModuleDockerContainer
         }
         $this->_imageId = substr($containerData->Image, 7);
         $this->_portBindings = array();
-        if (isset($containerData->HostConfig->PortBindings)) {
-            foreach ($containerData->HostConfig->PortBindings as $containerPort => $mappings) {
+        if (isset($containerData->NetworkSettings->Ports)) {
+            foreach ($containerData->NetworkSettings->Ports as $containerPort => $mappings) {
                 foreach ($mappings as $mapping) {
                     array_push(
                         $this->_portBindings,

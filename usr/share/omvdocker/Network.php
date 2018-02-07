@@ -74,9 +74,8 @@ class OMVModuleDockerNetwork
      *
      * @param string $id      Id of the new network
      * @param array  $data    Associative array with Network data
-     * @param int    $apiPort Network port used by API calls
      */
-    public function __construct($id, $data, $apiPort)
+    public function __construct($id, $data)
     {
         $this->_id = $id;
         $item = $data[substr($id, 0, 12)];

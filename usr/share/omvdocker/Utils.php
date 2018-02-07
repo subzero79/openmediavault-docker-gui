@@ -65,7 +65,8 @@ class OMVModuleDockerUtil
             $curl, array(
                 CURLOPT_RETURNTRANSFER => 1,
                 CURLOPT_TIMEOUT => 30,
-                CURLOPT_CONNECTTIMEOUT => 5
+                CURLOPT_CONNECTTIMEOUT => 5,
+                CURLOPT_UNIX_SOCKET_PATH => "/var/run/docker.sock"
             )
         );
         curl_setopt($curl, CURLOPT_URL, $url);
@@ -112,16 +113,15 @@ class OMVModuleDockerUtil
     /**
      * Returns an array with maclvan network names and their subnets
      *
-     * @param int  $apiPort     Network port to use in API call
      * @param bool $incDangling Flag to filter dangling images (not used)
      *
      * @return array $objects An array with macvlan names and subnets
      *
      */
-    public static function getMacVlanNetworks($apiPort, $incDangling)
+    public static function getMacVlanNetworks($incDangling)
     {
         $objects=array();
-        $url = "http://localhost:" . $apiPort . "/networks/?filters=%7B%22driver%22%3A%7B%22macvlan%22%3Atrue%7D%7D";
+        $url = "http::/" . "networks/?filters=%7B%22driver%22%3A%7B%22macvlan%22%3Atrue%7D%7D";
         $response = OMVModuleDockerUtil::doApiCall($url);
         $macvlan_data = json_decode($response);
         $objects = array();
@@ -141,16 +141,15 @@ class OMVModuleDockerUtil
     /**
      * Returns an array with Image objects on the system
      *
-     * @param int  $apiPort     Network port to use in API call
      * @param bool $incDangling Flag to filter dangling images (not used)
      *
      * @return array $objects An array with Image objects
      *
      */
-    public static function getImages($apiPort, $incDangling)
+    public static function getImages($incDangling)
     {
         $objects=array();
-        $url = "http://localhost:" . $apiPort . "/images/json?all=0";
+        $url = "http::/" . "images/json?all=0";
         /*
         if ($incDangling) {
         $url .= "0";
@@ -164,7 +163,7 @@ class OMVModuleDockerUtil
             $data[substr($item->Id, 0, 12)] = $item;
         }
         foreach ($data as $item) {
-            $image = new OMVModuleDockerImage($item->Id, $data, $apiPort);
+            $image = new OMVModuleDockerImage($item->Id, $data);
             $tmp=array(
                 "repository"=>rtrim(ltrim($image->getRepository(), "<"), ">"),
                 "tag"=>rtrim(ltrim($image->getTag(), "<"), ">"),
@@ -182,17 +181,16 @@ class OMVModuleDockerUtil
     /**
      * Returns an array with Images to be presented in the grid
      *
-     * @param int  $apiPort     Network port to use in API call
      * @param bool $incDangling Flag to filter dangling images (not used)
      *
      * @return array $objects An array with Image objects
      *
      */
-    public static function getImageList($apiPort, $incDangling)
+    public static function getImageList($incDangling)
     {
         $objects=array();
         $now = date("c");
-        $url = "http://localhost:" . $apiPort . "/images/json?all=0";
+        $url = "http::/" . "images/json?all=0";
         $response = OMVModuleDockerUtil::doApiCall($url);
         $data = array();
         foreach (json_decode($response) as $item) {
@@ -225,36 +223,34 @@ class OMVModuleDockerUtil
      * Returns a single image from it's ID
      *
      * @param string $id      The ID of the image to retrieve
-     * @param int    $apiPort Network port to use in API call
      *
      * @return OMVModuleDockerImage $image A single Docker image
      *
      */
-    public static function getImage($id, $apiPort)
+    public static function getImage($id)
     {
         $objects = array();
-        $url = "http://localhost:" . $apiPort . "/images/json?all=1";
+        $url = "http::/" . "images/json?all=1";
         $response = OMVModuleDockerUtil::doApiCall($url);
         $data = array();
         foreach (json_decode($response) as $item) {
             $data[substr($item->Id, 7, 12)] = $item;
         }
-        return (new OMVModuleDockerImage(substr($data[$id]->Id, 7, 12), $data, $apiPort));
+        return (new OMVModuleDockerImage(substr($data[$id]->Id, 7, 12), $data));
     }
 
 
     /**
      * Returns an array with Container objects on the system
      *
-     * @param int $apiPort Network port to use in API call
      *
      * @return array $objects An array with Container objects
      *
      */
-    public static function getContainers($apiPort)
+    public static function getContainers()
     {
         $objects = array();
-        $url = "http://localhost:" . $apiPort . "/containers/json?all=1";
+        $url = "http::/" . "containers/json?all=1";
         $response = OMVModuleDockerUtil::doApiCall($url);
         $data = array();
         foreach (json_decode($response) as $item) {
@@ -263,8 +259,7 @@ class OMVModuleDockerUtil
         foreach ($data as $item) {
             $container = new OMVModuleDockerContainer(
                 $item->Id,
-                $data,
-                $apiPort
+                $data
             );
             $ports = "";
             foreach ($container->getPorts() as $exposedport => $hostports) {
@@ -279,9 +274,7 @@ class OMVModuleDockerUtil
                 }
             }
             $image = OMVModuleDockerUtil::getImage(
-                substr($container->getImageId(), 0, 12),
-                $apiPort
-            );
+                substr($container->getImageId(), 0, 12));
             $ports = rtrim($ports, ", ");
             $obj = array(
                 "id" => $container->getId(),
@@ -318,16 +311,14 @@ class OMVModuleDockerUtil
     /**
      * Returns an array with Containers for presentation in grid
      *
-     * @param int $apiPort Network port to use in API call
-     *
      * @return array $objects An array with Container objects
      *
      */
-    public static function getContainerList($apiPort)
+    public static function getContainerList()
     {
         $objects = array();
         $now = date("c");
-        $url = "http://localhost:" . $apiPort . "/containers/json?all=1";
+        $url = "http::/" . "containers/json?all=1";
         $response = OMVModuleDockerUtil::doApiCall($url);
         foreach (json_decode($response) as $item) {
             $ports = "";
@@ -381,36 +372,34 @@ class OMVModuleDockerUtil
      * Returns a single container from it's ID
      *
      * @param string $id      The ID of the container to retrieve
-     * @param int    $apiPort Network port to use in API call
      *
      * @return OMVModuleDockerContainer $container A single container object
      *
      */
-    public static function getContainer($id, $apiPort)
+    public static function getContainer($id)
     {
         $objects = array();
-        $url = "http://localhost:" . $apiPort . "/containers/json?all=1";
+        $url = "http::/" . "containers/json?all=1";
         $response = OMVModuleDockerUtil::doApiCall($url);
         $data = array();
         foreach (json_decode($response) as $item) {
             $data[substr($item->Id, 0, 12)] = $item;
         }
-        return (new OMVModuleDockerContainer($data[$id]->Id, $data, $apiPort));
+        return (new OMVModuleDockerContainer($data[$id]->Id, $data));
     }
 
     /**
      * Returns an array with containers name that are connected requested network
      *
-     * @param int  $apiPort     Network port to use in API call
      * @param string $network   Network name to inspect in API call
      *
      * @return array $objects An array with Image objects
      *
      */
-    public static function getContainersInNetwork($apiPort, $network)
+    public static function getContainersInNetwork($network)
     {
         $objects=array();
-        $url = "http://127.0.0.1:" . $apiPort . "/networks/" . $network;
+        $url = "http::/" . "networks/" . $network;
         $response = OMVModuleDockerUtil::doApiCall($url);
         $cdata = json_decode($response);
         foreach ($cdata->Containers as $key=>$value) {
@@ -425,16 +414,14 @@ class OMVModuleDockerUtil
     /**
      * Returns an array with Networks to be presented in the grid
      *
-     * @param int  $apiPort     Network port to use in API call
-     *
      * @return array $objects An array with Image objects
      *
      */
-    public static function getNetworkList($apiPort)
+    public static function getNetworkList()
     {
         $objects=array();
         $now = date("c");
-        $url = "http://localhost:" . $apiPort . "/networks";
+        $url = "http::/" . "networks";
         $response = OMVModuleDockerUtil::doApiCall($url);
         $data = array();
         foreach (json_decode($response) as $item) {
@@ -444,7 +431,7 @@ class OMVModuleDockerUtil
               "driver" => $item->Driver,
               "scope" => $item->Scope,
               "subnet" => $item->IPAM->Config[0]->Subnet,
-              "containers" => OMVModuleDockerUtil::getContainersInNetwork("42005",$item->Name)
+              "containers" => OMVModuleDockerUtil::getContainersInNetwork($item->Name)
             );
             array_push($objects, $tmp);
         }
@@ -522,13 +509,12 @@ class OMVModuleDockerUtil
     /**
      * Change the Docker daemon settings
      *
-     * @param string $apiPort The new API port to use
      * @param string $absPath Absolute path where Docker files should be moved
      *
      * @return void
      *
      */
-    public static function changeDockerSettings($context, $apiPort, $absPath)
+    public static function changeDockerSettings($context, $absPath)
     {
         self::$database = Database::getInstance();
         OMVModuleDockerUtil::stopDockerService();
@@ -560,59 +546,17 @@ class OMVModuleDockerUtil
         // Next get the old settings object
         $oldSettings = self::$database->getAssoc(self::$dataModelPath);
 
-        // Next umount old bind mount
-        if (!(strcmp($oldSettings['dockermntent'], "") === 0)) {
-            $cmd = "mount | grep /var/lib/docker/openmediavault | wc -l";
-            $process = new Process($cmd);
-            $out = $process->execute();
-            while ($out > 0) {
-                $cmd = "umount /var/lib/docker/openmediavault";
-                $process = new Process($cmd);
-                $out = $process->execute();
-                $cmd = "mount | grep /var/lib/docker/openmediavault | wc -l";
-                $process = new Process($cmd);
-                $out = $process->execute();
-            }
-        }
-
         $result = rtrim($result);
         $result .= "\n\n" . '### Do not change these lines. They are added ' .
             'and updated by the OMV Docker GUI plugin.' . "\n";
-        $result .= 'OMVDOCKER_API="-H tcp://127.0.0.1:' . $apiPort .
-            '"' . "\n";
         if (strcmp($absPath, "") !==0) {
-            $result .= 'OMVDOCKER_IMAGE_PATH="-g /var/lib/docker/openmediavault"' . "\n";
+            $result .= 'OMVDOCKER_IMAGE_PATH="-g ' . $absPath . '"' . "\n";
         } else {
             $result .= 'OMVDOCKER_IMAGE_PATH=""' . "\n";
         }
         $result .= '### Do not add any configuration below this line. It will be ' .
             'removed when the plugin is removed';
         file_put_contents("$fileName", $result);
-
-        //Next fix OMV config backend if the base path should be relocated
-        //Start by removing any old mntent entries
-        $mnt = Rpc::call("FsTab", "getByDir", ["dir"=>'/var/lib/docker/openmediavault'],$context);
-        if($mnt){
-            $config = new ConfigObject('conf.system.filesystem.mountpoint');
-            $config->setAssoc($mnt);
-            self::$database->delete($config,TRUE);
-        }
-
-        //Next generate a new mntent entry if a shared folder is specified
-        if (!(strcmp($absPath, "") === 0)) {
-
-            $newMntent = [
-                "uuid" => \OMV\Environment::get("OMV_CONFIGOBJECT_NEW_UUID"),
-                "fsname" => $absPath,
-                "dir" => "/var/lib/docker/openmediavault",
-                "type" => "none",
-                "opts" => "bind,defaults",
-                "freq" => 0,
-                "passno" => 0
-            ];
-
-            $newMntent = Rpc::call("FsTab", "set", $newMntent, $context);
-        }
 
         //Update settings object
         if (strcmp($absPath, "") === 0) {
@@ -621,9 +565,7 @@ class OMVModuleDockerUtil
             $tmpMntent = $newMntent['uuid'];
         }
         $object = array(
-            "dockermntent" => $tmpMntent,
             "enabled" => $oldSettings['enabled'],
-            "apiPort" => $oldSettings['apiPort'],
             "sharedfolderref" => $oldSettings['sharedfolderref']
         );
 
@@ -631,28 +573,14 @@ class OMVModuleDockerUtil
         $config->setAssoc($object);
         self::$database->set($config);
 
-        //Re-generate fstab entries
-        $cmd = "export LANG=C; omv-mkconf fstab 2>&1";
-        $process = new Process($cmd);
-        $out = $process->execute();
-
-        // Finally mount the new bind-mount entry
-        if (!(strcmp($absPath, "") === 0)) {
-            //Remount the bind-mount with defaults options
-            $cmd = "export LANG=C; mount -o bind,defaults " .
-                $newMntent['fsname'] . " " . $newMntent['dir'] . " 2>&1";
-            $process = new Process($cmd);
-            $out = $process->execute();
-        }
-
         OMVModuleDockerUtil::startDockerService();
     }
 
-    function getContainersNotInSelectedNetworkList($apiPort, $selectednetwork, $incDangling)
+    function getContainersNotInSelectedNetworkList($selectednetwork, $incDangling)
     {
         $objects=array();
         $ctplusnetworks=array();
-        $url = "http://127.0.0.1:" . $apiPort . "/containers/json?all=1";
+        $url = "http::/" . "containers/json?all=1";
         $response = OMVModuleDockerUtil::doApiCall($url);
         $cdata = json_decode($response,true);
         foreach ($cdata as $item) {
@@ -671,11 +599,11 @@ class OMVModuleDockerUtil
         return $objects;
     }
 
-    function getContainersInSelectedNetworkList($apiPort, $selectednetwork, $incDangling)
+    function getContainersInSelectedNetworkList($selectednetwork, $incDangling)
     {
         $objects=array();
         $ctplusnetworks=array();
-        $url = "http://127.0.0.1:" . $apiPort . "/containers/json?all=1";
+        $url = "http::/" . "containers/json?all=1";
         $response = OMVModuleDockerUtil::doApiCall($url);
         $cdata = json_decode($response,true);
         foreach ($cdata as $item) {

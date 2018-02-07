@@ -175,9 +175,7 @@ class OMVRpcServiceDocker extends ServiceAbstract
         $settings=$this->database->getAssoc($this->dataModelPath);
 
         $objects = array();
-        $objects = OMVModuleDockerUtil::getMacVlanNetworks(
-            $settings['apiPort']
-        );
+        $objects = OMVModuleDockerUtil::getMacVlanNetworks();
         return $objects;
     }
 
@@ -206,10 +204,7 @@ class OMVRpcServiceDocker extends ServiceAbstract
                 $incDangling = true;
             }
 
-            $objects = OMVModuleDockerUtil::getImageList(
-                $settings['apiPort'],
-                $incDangling
-            );
+            $objects = OMVModuleDockerUtil::getImageList($incDangling);
         }
         return $objects;
     }
@@ -314,8 +309,7 @@ class OMVRpcServiceDocker extends ServiceAbstract
         $objects = array();
         $settings=$this->database->getAssoc($this->dataModelPath);
 
-        $url = "http://localhost:" . $settings['apiPort'] .
-            "/images/search?term=" . $params["name"];
+        $url = "http::/" . "images/search?term=" . $params["name"];
         $response = OMVModuleDockerUtil::doApiCall($url);
         $data = json_decode($response);
 
@@ -399,7 +393,7 @@ class OMVRpcServiceDocker extends ServiceAbstract
         );
         $settings=$this->database->getAssoc($this->dataModelPath);
 
-        $image = OMVModuleDockerUtil::getImage($params['id'], $settings['apiPort']);
+        $image = OMVModuleDockerUtil::getImage($params['id']);
 
         $object = array(
             "repository" => rtrim(ltrim($image->getRepository(), "<"), ">"),
@@ -433,9 +427,7 @@ class OMVRpcServiceDocker extends ServiceAbstract
         $settings=$this->database->getAssoc($this->dataModelPath);
 
         if ($settings['enabled']) {
-            $objects = OMVModuleDockerUtil::getContainerList(
-                $settings['apiPort']
-            );
+            $objects = OMVModuleDockerUtil::getContainerList();
         }
         return $objects;
     }
@@ -618,11 +610,9 @@ class OMVRpcServiceDocker extends ServiceAbstract
         );
         $settings=$this->database->getAssoc($this->dataModelPath);
 
-        $container = OMVModuleDockerUtil::getContainer($params['cid'], $settings['apiPort']);
+        $container = OMVModuleDockerUtil::getContainer($params['cid']);
         $image = OMVModuleDockerUtil::getImage(
-            substr($container->getImageId(), 0, 12),
-            $settings['apiPort']
-        );
+            substr($container->getImageId(), 0, 12));
 
         $restartpolicy = $container->getRestartPolicy();
         $maxretries = $container->getMaxRetries();
@@ -817,7 +807,7 @@ class OMVRpcServiceDocker extends ServiceAbstract
         $settings=$this->database->getAssoc($this->dataModelPath);
         $ids = explode(" ", $params['id']);
         foreach ($ids as $id) {
-            $container = OMVModuleDockerUtil::getContainer($id, $settings['apiPort']);
+            $container = OMVModuleDockerUtil::getContainer($id);
             $logpath = $container->getLogPath();
             $cmd = "cat /dev/null >" . $logpath;
             $process = new Process($cmd);
@@ -889,9 +879,7 @@ class OMVRpcServiceDocker extends ServiceAbstract
         $settings=$this->database->getAssoc($this->dataModelPath);
 
         if ($settings['enabled']) {
-            $containers = OMVModuleDockerUtil::getContainers(
-                $settings['apiPort']
-            );
+            $containers = OMVModuleDockerUtil::getContainers();
             foreach ($containers as $container) {
                 if ($container['hasmounts']) {
                     array_push($objects, array("name" => $container['name']));
@@ -958,7 +946,7 @@ class OMVRpcServiceDocker extends ServiceAbstract
         );
         $settings=$this->database->getAssoc($this->dataModelPath);
         $image = $params['image'];
-        $containers = OMVModuleDockerUtil::getContainers($settings['apiPort']);
+        $containers = OMVModuleDockerUtil::getContainers();
 
         foreach ($containers as $c) {
             if (strcmp($c['image'], $image) === 0) {
@@ -986,7 +974,7 @@ class OMVRpcServiceDocker extends ServiceAbstract
             array("role" => OMV_ROLE_ADMINISTRATOR)
         );
         $settings=$this->database->getAssoc($this->dataModelPath);
-        $container = OMVModuleDockerUtil::getContainer($params['id'], $settings['apiPort']);
+        $container = OMVModuleDockerUtil::getContainer($params['id']);
         $ports = "";
         foreach ($container->getPorts() as $exposedport => $hostports) {
             if ($hostports) {
@@ -1001,9 +989,7 @@ class OMVRpcServiceDocker extends ServiceAbstract
         }
         $ports = rtrim($ports, ", ");
         $image = OMVModuleDockerUtil::getImage(
-            substr($container->getImageId(), 0, 12),
-            $settings['apiPort']
-        );
+            substr($container->getImageId(), 0, 12));
 
         $object = array(
             "id" => $container->getId(),
@@ -1054,9 +1040,7 @@ class OMVRpcServiceDocker extends ServiceAbstract
 
         $objects = array();
         if ($settings['enabled']) {
-            $objects = OMVModuleDockerUtil::getNetworkList(
-                $settings['apiPort']
-            );
+            $objects = OMVModuleDockerUtil::getNetworkList();
         }
         return $objects;
     }
@@ -1129,13 +1113,14 @@ class OMVRpcServiceDocker extends ServiceAbstract
         );
 
         $dockerVersion = "0";
-        $dockerVersionInfo = "";
+        $dockerVersionTxt = "";
         $cmd = "docker --version 2>&1";
         $process = new Process($cmd);
         $out = $process->execute();
 
         if (!preg_match('/^Docker version.*$/', $out, $matches)) {
-            $dockerVersionInfo = "Docker not installed";
+            $dockerVersionTxt = "Docker not installed";
+            $dockerInfoTxt = "Docker not installed";
         } else {
             $dockerVersion = $matches[1];
             $cmd = "docker version";
@@ -1143,16 +1128,25 @@ class OMVRpcServiceDocker extends ServiceAbstract
             $process = new Process($cmd);
             $process->setQuiet();
             $process->execute($out);
-            $dockerVersionInfo = implode("\n", $out);
+            $dockerVersionTxt = implode("\n", $out);
+
+            unset($cmd,$out);
+            $cmd = "docker info";
+            $process = new Process($cmd);
+            $process->setQuiet();
+            $process->execute($out);
+            $dockerInfoTxt = implode("\n", $out);
+
         }
+
         $settings=$this->database->getAssoc($this->dataModelPath);
 
         //$object["showDanglingImages"] = boolval(
         //$object["showDanglingImages"]);
         $settings["enabled"] = boolval($settings["enabled"]);
-        $settings["apiPort"] = intval($settings["apiPort"]);
-        $settings["version"] = $dockerVersion;
-        $settings["versionInfo"] = $dockerVersionInfo;
+        //To be changed to docker info
+        $settings["dockerInfo"] = $dockerInfoTxt;
+        $settings["dockerVersion"] = $dockerVersionTxt;
         $settings["sharedfolderref"] = $settings["sharedfolderref"];
         $settings["cwarn"] = boolval($settings["cwarn"]);
 
@@ -1167,6 +1161,7 @@ class OMVRpcServiceDocker extends ServiceAbstract
      *
      * @return array $object An associative array with all the new settings
      */
+
     public function setSettings($params, $context)
     {
         $this->validateMethodContext(
@@ -1179,32 +1174,20 @@ class OMVRpcServiceDocker extends ServiceAbstract
             '"type": "object",' .
             '"properties": {' .
             '"enabled": {   "type": "boolean" },' .
-            '"versionInfo": {   "type": "string" },' .
-            '"version": {   "type": "string" },' .
-            '"apiPort": { "type": "integer" },' .
             '"sharedfolderref": { "type": "string" },' .
-            '"uuid": { "type": "string" },' .
-            '"orgpath": { "type": "string" },' .
-            '"destpath": { "type": "string" },' .
             '"cwarn": { "type": "boolean"}' .
             '}}'
         );
 
-        //Create the folder used for bind mounting when relocating
-        //the base path
-        $cmd = "mkdir -p /var/lib/docker/openmediavault";
-        $process = new Process($cmd);
-        $process->execute();
 
         //Get the old settings object
         $oldSettings = $this->database->getAssoc($this->dataModelPath);
+        $oldsharedFolder = $oldSettings['sharedfolderref'];
+        $sharedFolder = $params['sharedfolderref'];
 
-        $newApiPort = $oldSettings['apiPort'];
-        $sharedFolder = $oldSettings['sharedfolderref'];
-        //Make sure that the plugin is enabled to avoid unnecessary restarts of
-        //the docker service.
-        if ($params['enabled']) {
-            $newApiPort = $params['apiPort'];
+//      This will check that if the plugin is enabled and the shared folder reference is different from the current one, will regenerate /etc/default/docker
+//      and restart the daemon. This will prevent restart of the daemon if the user changes the container modification warning setting.
+        if ($params['enabled'] && !(strcmp($params['sharedfolderref'], $oldsharedFolder) === 0)) {
             $absPath = "";
             $sharedFolder = "";
             if (!(strcmp($params['sharedfolderref'], "") === 0)) {
@@ -1218,23 +1201,15 @@ class OMVRpcServiceDocker extends ServiceAbstract
                 );
                 $sharedFolder = $params['sharedfolderref'];
             }
-            OMVModuleDockerUtil::changeDockerSettings($context, $newApiPort, $absPath);
+            OMVModuleDockerUtil::changeDockerSettings($context, $absPath);
         }
 
         //Get the possibly changed settings object
         $oldSettings = $this->database->getAssoc($this->dataModelPath);
 
-        if (isset($oldSettings['dockermntent'])) {
-            $tmpMntent = $oldSettings['dockermntent'];
-        } else {
-            $tmpMntent = "";
-        }
-
         // Update the configuration object.
         $object = array(
-            "dockermntent" => $tmpMntent,
             "enabled" => array_boolval($params, "enabled"),
-            "apiPort" => $newApiPort,
             "sharedfolderref" => $sharedFolder,
             "cwarn" => array_boolval($params, "cwarn")
         );
@@ -1586,8 +1561,7 @@ class OMVRpcServiceDocker extends ServiceAbstract
                     if (isset($pulledImages[$imgRepo])) {
                         $pulled = true;
                         $image_obj = OMVModuleDockerUtil::getImage(
-                            $pulledImages[$imgRepo],
-                            $settings['apiPort']
+                            $pulledImages[$imgRepo]
                         );
                         $ports_ary = $image_obj->getPorts();
                     }
@@ -1626,8 +1600,7 @@ class OMVRpcServiceDocker extends ServiceAbstract
                 if (isset($pulledImages[$imgRepo])) {
                     $pulled = true;
                     $image_obj = OMVModuleDockerUtil::getImage(
-                        $pulledImages[$imgRepo],
-                        $settings['apiPort']
+                        $pulledImages[$imgRepo]
                     );
                     $ports_ary = $image_obj->getPorts();
                     $local_time = (int)date("U", $image_obj->getTimestamp());
@@ -1791,9 +1764,7 @@ class OMVRpcServiceDocker extends ServiceAbstract
         $objects = array();
         $settings=$this->database->getAssoc($this->dataModelPath);
         if ($settings['enabled']) {
-            $objects = OMVModuleDockerUtil::getContainersNotInSelectedNetworkList(
-                $settings['apiPort'],$params['selectednetwork']
-            );
+            $objects = OMVModuleDockerUtil::getContainersNotInSelectedNetworkList($params['selectednetwork']);
         }
         return $objects;
     }
@@ -1816,9 +1787,7 @@ class OMVRpcServiceDocker extends ServiceAbstract
         $objects = array();
         $settings=$this->database->getAssoc($this->dataModelPath);
         if ($settings['enabled']) {
-            $objects = OMVModuleDockerUtil::getContainersInSelectedNetworkList(
-                $settings['apiPort'],$params['selectednetwork']
-            );
+            $objects = OMVModuleDockerUtil::getContainersInSelectedNetworkList($params['selectednetwork']);
         }
         return $objects;
     }

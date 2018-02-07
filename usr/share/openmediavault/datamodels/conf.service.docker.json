@@ -10,31 +10,8 @@
         "enabled": {
             "type": "boolean"
         },
-        "apiPort": {
-            "type": "integer"
-        },
-        "version": {
-            "type": "string"
-        },
-        "versionInfo": {
-            "type": "string"
-        },
         "sharedfolderref": {
             "type": "string"
-        },
-        "dockermntent":{
-            "type": "string"
-        },
-        "uuid":{
-            "type": "string"    
-        },
-        "orgpath":{
-            "type":"string",
-            "format": "dirpath"
-        },
-        "destpath":{
-            "type":"string",
-            "format": "dirpath"
         },
         "cwarn": {
             "type": "boolean"

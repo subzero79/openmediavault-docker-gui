@@ -348,10 +348,14 @@ class OMVModuleDockerContainer
             $this->_extraArgs = $containerData->Config->Labels->omv_docker_extra_args;
         }
 
+        $this->_containerCommand = "";
+        if (isset($containerData->Config->Labels->omv_docker_container_command)) {
+            $this->_containerCommand = $containerData->Config->Labels->omv_docker_container_command;
+        }
+
         $this->_logPath = $containerData->LogPath;
         //$logPath = $containerData->LogPath;
         //print $logPath;
-    
 
         $this->_hostName = "";
         if (!(strcmp($containerData->Config->Hostname, "") === 0)) {
@@ -614,6 +618,17 @@ class OMVModuleDockerContainer
     public function getExtraArgs()
     {
         return $this->_extraArgs;
+    }
+
+    /**
+     * Get the value of the label property called omv_docker_container_command use to stored the container command
+     *
+     * @return string $_containerCommand
+     * @access public
+     */
+    public function getContainerCommand()
+    {
+        return $this->_containerCommand;
     }
 
     /**

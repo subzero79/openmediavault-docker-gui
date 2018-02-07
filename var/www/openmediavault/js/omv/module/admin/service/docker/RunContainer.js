@@ -63,6 +63,7 @@ Ext.define("OMV.module.admin.service.docker.RunContainer", {
     action: "",
     cid: "",
     name: "",
+    containercommand: "",
 
     initComponent: function() {
         var me = this;
@@ -379,13 +380,49 @@ Ext.define("OMV.module.admin.service.docker.RunContainer", {
             title: _("Extra arguments"),
             id: "dockerExtraArguments",
             collapsible: true,
+            padding: "0 10 10 10",
             items: [{
+                xtype: "container",
+                layout: "hbox",
+                shadow: false,
+                border: false,
+                padding: "0 0 5 0",
+                defaultType: "container",
+                items: [{html: _("These extra arguments will be passed to docker when running the container"), flex: 1
+                }]
+            },{
                 xtype: "textfield",
                 fieldLabel: _("Extra args"),
                 readOnly: false,
                 name: "extraArgs",
                 id: "dockerExtraArgs",
                 value: me.extraargs
+            }]
+        });
+
+        //Add container command fieldset
+        items.push({
+            xtype: "fieldset",
+            title: _("Container command"),
+            id: "dockerContainerCommand",
+            collapsible: true,
+            padding: "0 10 10 10",
+            items: [{
+                xtype: "container",
+                layout: "hbox",
+                shadow: false,
+                border: false,
+                padding: "0 0 5 0",
+                defaultType: "container",
+                items: [{html: _("This command and any arguments will be passed to the container"), flex: 1
+                }]
+            },{
+                xtype: "textfield",
+                fieldLabel: _("Command"),
+                readOnly: false,
+                name: "containerCommand",
+                id: "dockercontainerCommand",
+                value: me.containercommand
             }]
         });
 
@@ -422,6 +459,7 @@ Ext.define("OMV.module.admin.service.docker.RunContainer", {
         me.getForm().findField("networkMode").setValue(me.networkmode);
         me.getForm().findField("hostName").setValue(me.hostname);
         me.getForm().findField("extraArgs").setValue(me.extraargs);
+        me.getForm().findField("containerCommand").setValue(me.containercommand);
 
         //Add any ports mapped in container
         var portFieldset = me.queryById("dockerPortForward");
@@ -579,6 +617,7 @@ Ext.define("OMV.module.admin.service.docker.RunContainer", {
             extraArgs: me.getForm().findField("extraArgs").getValue(),
             hostName: me.getForm().findField("hostName").getValue(),
             timeSync: me.getForm().findField("timeSync").getValue(),
+            containerCommand: me.getForm().findField("containerCommand").getValue(),
             cid: me.cid
         };
         if(me.mode === "remote") {
@@ -655,4 +694,3 @@ Ext.define("OMV.module.admin.service.docker.RunContainer", {
     }
 
 });
-

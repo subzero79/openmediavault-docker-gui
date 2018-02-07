@@ -107,6 +107,13 @@ Ext.define("OMV.module.admin.service.docker.ContainerGrid", {
         sortable: false,
         stateId: 'extraargs',
         filter: 'string'
+    },{
+        xtype: "textcolumn",
+        text: _("CONTAINER COMMAND"),
+        dataIndex: 'containercommand',
+        sortable: false,
+        stateId: 'containercommand',
+        filter: 'string'
     }],
 
     initComponent: function() {
@@ -138,7 +145,8 @@ Ext.define("OMV.module.admin.service.docker.ContainerGrid", {
                         { name: "extraargs", type: "string"},
                         { name: "hostname", type: "string" },
                         { name: "timesync", type: "boolean" },
-                        { name: "imagevolumes", type: "array" }
+                        { name: "imagevolumes", type: "array" },
+                        { name: "containercommand", type: "string" }
                     ]
                 }),
                 proxy: {
@@ -295,7 +303,7 @@ Ext.define("OMV.module.admin.service.docker.ContainerGrid", {
             "copy": false,
             "modify": false,
             "details": false,
-			"logs": false,
+            "logs": false,
             "execute": false,
             "commit": false,
             "logs": false,
@@ -706,7 +714,8 @@ Ext.define("OMV.module.admin.service.docker.ContainerGrid", {
                             extraargs: response["extraargs"],
                             hostname: response["hostname"],
                             timesync: response["timesync"],
-                            imagevolumes: response["imagevolumes"]
+                            imagevolumes: response["imagevolumes"],
+                            containercommand: response["containercommand"]
                         }).show();
                     }
                 }
@@ -776,6 +785,7 @@ Ext.define("OMV.module.admin.service.docker.ContainerGrid", {
                                                     timesync: response["timesync"],
                                                     imagevolumes: response["imagevolumes"],
                                                     extraargs: response["extraargs"],
+                                                    containercommand: response["containercommand"],
                                                     name: response["name"],
                                                     cid: response["id"],
                                                     action: "modify"
@@ -817,6 +827,7 @@ Ext.define("OMV.module.admin.service.docker.ContainerGrid", {
                                         copyVolumes: response["volumesfrom"],
                                         hostname: response["hostname"],
                                         extraargs: response["extraargs"],
+                                        containercommand: response["containercommand"],
                                         timesync: response["timesync"],
                                         imagevolumes: response["imagevolumes"],
                                         name: response["name"],

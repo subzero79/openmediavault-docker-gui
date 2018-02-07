@@ -308,7 +308,8 @@ class OMVModuleDockerUtil
                 "extraargs" => $container->getExtraArgs(),
                 "hostname" => $container->getHostName(),
                 "timesync" => $container->syncsTime(),
-                "imagevolumes" => $image->getVolumes());
+                "imagevolumes" => $image->getVolumes(),
+                "containercommand" => $container->getContainerCommand());
             array_push($objects, $obj);
         }
         return $objects;
@@ -350,7 +351,8 @@ class OMVModuleDockerUtil
                 $state = "stopped";
             }
 
-            $extraargs = $item->Labels->omv_docker_extra_args; 
+            $extraargs = $item->Labels->omv_docker_extra_args;
+            $containercommand = $item->Labels->omv_docker_container_command;
 
             array_push(
                 $objects,
@@ -366,7 +368,8 @@ class OMVModuleDockerUtil
                         date("c", $item->Created)
                     ) . " ago",
                     "state" => $state,
-                    "extraargs" => $extraargs
+                    "extraargs" => $extraargs,
+                    "containercommand" => $containercommand
                 )
             );
         }

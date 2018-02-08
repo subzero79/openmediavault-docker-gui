@@ -309,7 +309,7 @@ class OMVRpcServiceDocker extends ServiceAbstract
         $objects = array();
         $settings=$this->database->getAssoc($this->dataModelPath);
 
-        $url = "http::/" . "images/search?term=" . $params["name"];
+        $url = "http::/images/search?term=" . $params["name"];
         $response = OMVModuleDockerUtil::doApiCall($url);
         $data = json_decode($response);
 

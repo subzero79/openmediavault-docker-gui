@@ -134,7 +134,7 @@ class OMVModuleDockerImage
         ) . " ago";
         $this->_size = OMVModuleDockerUtil::bytesToSize($item->VirtualSize);
 
-        $url = "http::/" . "images/$id/json";
+        $url = "http::/images/$id/json";
         $response = OMVModuleDockerUtil::doApiCall($url);
 
         $imageData = json_decode($response);

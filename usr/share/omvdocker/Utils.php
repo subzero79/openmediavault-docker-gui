@@ -121,7 +121,7 @@ class OMVModuleDockerUtil
     public static function getMacVlanNetworks($incDangling)
     {
         $objects=array();
-        $url = "http::/" . "networks/?filters=%7B%22driver%22%3A%7B%22macvlan%22%3Atrue%7D%7D";
+        $url = "http::/networks/?filters=%7B%22driver%22%3A%7B%22macvlan%22%3Atrue%7D%7D";
         $response = OMVModuleDockerUtil::doApiCall($url);
         $macvlan_data = json_decode($response);
         $objects = array();
@@ -149,7 +149,7 @@ class OMVModuleDockerUtil
     public static function getImages($incDangling)
     {
         $objects=array();
-        $url = "http::/" . "images/json?all=0";
+        $url = "http::/images/json?all=0";
         /*
         if ($incDangling) {
         $url .= "0";
@@ -190,7 +190,7 @@ class OMVModuleDockerUtil
     {
         $objects=array();
         $now = date("c");
-        $url = "http::/" . "images/json?all=0";
+        $url = "http::/images/json?all=0";
         $response = OMVModuleDockerUtil::doApiCall($url);
         $data = array();
         foreach (json_decode($response) as $item) {
@@ -230,7 +230,7 @@ class OMVModuleDockerUtil
     public static function getImage($id)
     {
         $objects = array();
-        $url = "http::/" . "images/json?all=1";
+        $url = "http::/images/json?all=1";
         $response = OMVModuleDockerUtil::doApiCall($url);
         $data = array();
         foreach (json_decode($response) as $item) {
@@ -250,7 +250,7 @@ class OMVModuleDockerUtil
     public static function getContainers()
     {
         $objects = array();
-        $url = "http::/" . "containers/json?all=1";
+        $url = "http::/containers/json?all=1";
         $response = OMVModuleDockerUtil::doApiCall($url);
         $data = array();
         foreach (json_decode($response) as $item) {
@@ -318,7 +318,7 @@ class OMVModuleDockerUtil
     {
         $objects = array();
         $now = date("c");
-        $url = "http::/" . "containers/json?all=1";
+        $url = "http::/containers/json?all=1";
         $response = OMVModuleDockerUtil::doApiCall($url);
         foreach (json_decode($response) as $item) {
             $ports = "";
@@ -379,7 +379,7 @@ class OMVModuleDockerUtil
     public static function getContainer($id)
     {
         $objects = array();
-        $url = "http::/" . "containers/json?all=1";
+        $url = "http::/containers/json?all=1";
         $response = OMVModuleDockerUtil::doApiCall($url);
         $data = array();
         foreach (json_decode($response) as $item) {
@@ -399,7 +399,7 @@ class OMVModuleDockerUtil
     public static function getContainersInNetwork($network)
     {
         $objects=array();
-        $url = "http::/" . "networks/" . $network;
+        $url = "http::/snetworks/" . $network;
         $response = OMVModuleDockerUtil::doApiCall($url);
         $cdata = json_decode($response);
         foreach ($cdata->Containers as $key=>$value) {
@@ -421,7 +421,7 @@ class OMVModuleDockerUtil
     {
         $objects=array();
         $now = date("c");
-        $url = "http::/" . "networks";
+        $url = "http::/networks";
         $response = OMVModuleDockerUtil::doApiCall($url);
         $data = array();
         foreach (json_decode($response) as $item) {
@@ -580,7 +580,7 @@ class OMVModuleDockerUtil
     {
         $objects=array();
         $ctplusnetworks=array();
-        $url = "http::/" . "containers/json?all=1";
+        $url = "http::/containers/json?all=1";
         $response = OMVModuleDockerUtil::doApiCall($url);
         $cdata = json_decode($response,true);
         foreach ($cdata as $item) {
@@ -603,7 +603,7 @@ class OMVModuleDockerUtil
     {
         $objects=array();
         $ctplusnetworks=array();
-        $url = "http::/" . "containers/json?all=1";
+        $url = "http::/containers/json?all=1";
         $response = OMVModuleDockerUtil::doApiCall($url);
         $cdata = json_decode($response,true);
         foreach ($cdata as $item) {

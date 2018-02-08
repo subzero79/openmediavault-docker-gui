@@ -224,7 +224,7 @@ class OMVModuleDockerContainer
             date("c", $item->Created)
         ) . " ago";
 
-        $url = "http::/" . "containers/$id/json";
+        $url = "http::/containers/$id/json";
         $response = OMVModuleDockerUtil::doApiCall($url);
         $containerData = json_decode($response);
         $this->_image = $containerData->Config->Image;

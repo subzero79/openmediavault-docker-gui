@@ -38,7 +38,7 @@ tmpfile=$(mktemp)
 OMV_DOCKER_SHAREDFOLDERREF_UUID=$(omv-confdbadm read ${OMV_DOCKER_DM_NAME} | jq -r '.sharedfolderref')
 OMV_DOCKER_SHAREDFOLDER_PATH=$(omv_get_sharedfolder_path ${OMV_DOCKER_SHAREDFOLDERREF_UUID})
 
-if [ ! -z OMV_DOCKER_SHAREDFOLDER_PATH ];then
+if [ ! -z ${OMV_DOCKER_SHAREDFOLDER_PATH} ];then
 	echo ${OMVDOCKER_DEFAULT_CONF_HEADER} > ${tmpfile}
 	echo "OMVDOCKER_IMAGE_PATH=-g ${OMV_DOCKER_SHAREDFOLDER_PATH}" >> ${tmpfile}
 	echo ${OMVDOCKER_DEFAULT_CONF_FOOTER} >> ${tmpfile}

@@ -399,7 +399,7 @@ class OMVModuleDockerUtil
     public static function getContainersInNetwork($network)
     {
         $objects=array();
-        $url = "http::/snetworks/" . $network;
+        $url = "http::/networks/" . $network;
         $response = OMVModuleDockerUtil::doApiCall($url);
         $cdata = json_decode($response);
         foreach ($cdata->Containers as $key=>$value) {

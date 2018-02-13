@@ -18,27 +18,13 @@
  */
 
 class OMVModuleDocker extends \OMV\Engine\Module\ServiceAbstract
-    implements \OMV\Engine\Notify\IListener, \OMV\Engine\Module\IServiceStatus
+    implements \OMV\Engine\Module\IServiceStatus
 {
     public function getName()
     {
         return 'docker';
     }
-    public function startService()
-    {
-        $db = \OMV\Config\Database::getInstance();
-        $object = $db->get('conf.service.docker');
-        if (TRUE !== $object->get('enabled'))
-            return;
-        // Start this service and enable the unit file.
-        $systemCtl = new \OMV\System\SystemCtl('docker');
-        $systemCtl->enable(TRUE);
-    }
-    public function stopService()
-    {
-        $systemCtl = new \OMV\System\SystemCtl('docker');
-        $systemCtl->disable(TRUE);
-    }
+
     public function getStatus()
     {
         $db = \OMV\Config\Database::getInstance();
@@ -49,14 +35,6 @@ class OMVModuleDocker extends \OMV\Engine\Module\ServiceAbstract
             'title' => gettext("Docker"),
             'enabled' => $object->get('enabled'),
             'running' => $systemCtl->isActive()
-        );
-    }
-    public function bindListeners(\OMV\Engine\Notify\Dispatcher $dispatcher)
-    {
-        $dispatcher->addListener(
-            OMV_NOTIFY_MODIFY,
-            'org.openmediavault.conf.service.docker',
-            [ $this, 'setDirty' ]
         );
     }
 }

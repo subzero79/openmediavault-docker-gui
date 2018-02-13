@@ -30,16 +30,10 @@ Ext.define("OMV.module.admin.service.docker.Settings", {
     rpcService: "Docker",
     rpcGetMethod: "getSettings",
     rpcSetMethod: "setSettings",
-    plugins: [{
-        ptype: "configobject"
-    }],
-
-    uuid: "",
-
+    
     initComponent : function() {
         this.on("load", function () {
             var me = this;
-            this.uuid = OMV.UUID_UNDEFINED;
             var parent = this.up("tabpanel");
 
             if (!parent) {
@@ -52,13 +46,6 @@ Ext.define("OMV.module.admin.service.docker.Settings", {
             var networksPanel = parent.down("panel[title=" + _("Networks") + "]");
             var dockerVersion = settingsPanel.findField("version").getValue();
             var checked = settingsPanel.findField("enabled").checked
-            settingsPanel.findField("destpath").setValue(settingsPanel.findField("sharedfolderref").getValue());
-            var copyDisabled = true;
-            if(!(settingsPanel.findField("orgpath").getValue() === "") && !(settingsPanel.findField("destpath").getValue() === "")) {
-                copyDisabled = false;
-            }
-            settingsPanel.queryById("dockerCopyButton").setDisabled(copyDisabled);
-
 
             if (overviewPanel) {
                 if (checked) {
@@ -93,10 +80,8 @@ Ext.define("OMV.module.admin.service.docker.Settings", {
                 }
                 if (dockerVersion === "0") {
                     settingsPanel.findField("enabled").setDisabled(true);
-                    settingsPanel.findField("apiPort").setDisabled(true);
-                } else {
+                  } else {
                     settingsPanel.findField("enabled").setDisabled(false);
-                    settingsPanel.findField("apiPort").setDisabled(false);
                 }
             }
 
@@ -116,22 +101,15 @@ Ext.define("OMV.module.admin.service.docker.Settings", {
             items: [{
                 xtype: "checkbox",
                 name: "enabled",
-                boxLabel: _("Enable the plugin")
+                boxLabel: _("Enable the plugin"),
+                plugins: [{
+                    ptype: "fieldinfo",
+                    text: _("This setting does not stop/disable or start/enable the docker daemon")
+                }]
             },{
                 xtype: "checkbox",
                 name: "cwarn",
                 boxLabel: _("Warn when modifying container")
-            },{
-                xtype: "numberfield",
-                anchor: '100%',
-                maxValue: 65535,
-                minValue: 0,
-                name: "apiPort",
-                allowBlank: false,
-                plugins: [{
-                    ptype: "fieldinfo",
-                    text: _("Network port that the Docker API listens on. The plugin must be enabled for a change to be committed")
-                }]
             },{
                 xtype: "sharedfoldercombo",
                 name: "sharedfolderref",
@@ -140,111 +118,7 @@ Ext.define("OMV.module.admin.service.docker.Settings", {
                     text: _("The location of the Docker base path (this setting is optional and defaults to /var/lib/docker if unset). The plugin must be enabled for a change to be committed")
                 }],
                 allowNone: true,
-                allowBlank: true,
-                listeners: {
-                    scope: this,
-                    change: function(combo, newValue, oldValue, eOpts) {
-                        this.getForm().findField("destpath").setValue(newValue);
-                    }
-                }
-            },{
-                xtype: "container",
-                layout: "hbox",
-                padding: "0 0 10 0",
-                items: [{
-                    xtype: "textfield",
-                    name: "orgpath",
-                    flex: 1,
-                    triggers: {
-                        folder : {
-                            cls     : Ext.baseCSSPrefix + "form-folder-trigger",
-                            handler : "onTriggerClick"
-                        }
-                    },
-                    onTriggerClick : function() {
-                        Ext.create("OmvExtras.window.RootFolderBrowser", {
-                            listeners : {
-                                scope  : this,
-                                select : function(wnd, node, path) {
-                                    // Set the selected path.
-                                    this.setValue(path);
-                                }
-                            }
-                        }).show();
-                    },
-                    plugins: [{
-                        ptype: "fieldinfo",
-                        text: _("Source path for copying of Docker image/container data")
-                    }],
-                    padding: "0 10 0 0",
-                    listeners: {
-                        scope: this,
-                        change: function(field, newValue, oldValue, eOpts) {
-                            if((newValue !== "") && (this.getForm().findField("destpath").getValue() !== "")) {
-                                this.queryById("dockerCopyButton").setDisabled(false);
-                            } else {
-                                this.queryById("dockerCopyButton").setDisabled(true);
-                            }
-                        }
-                    }
-                },{
-                    xtype: "sharedfoldercombo",
-                    name: "destpath",
-                    plugins: [{
-                        ptype: "fieldinfo",
-                        text: _("Destination path")
-                    }],
-                    allowNone: true,
-                    allowBlank: true,
-                    readOnly: true,
-                    flex: 1,
-                    listeners: {
-                        scope: this,
-                        change: function(combo, newValue, oldValue, eOpts) {
-                            if((newValue !== "") && (this.getForm().findField("orgpath").getValue() !== "")) {
-                                this.queryById("dockerCopyButton").setDisabled(false);
-                            } else {
-                                this.queryById("dockerCopyButton").setDisabled(true);
-                            }
-                        }
-                    }
-                },{
-                    xtype: "button",
-                    itemId: "dockerCopyButton",
-                    icon: "images/docker_copy.png",
-                    iconCls: Ext.baseCSSPrefix + "btn-icon-16x16",
-                    flex: 0,
-                    width: 24,
-                    tooltip: _("Start copying of data"),
-                    listeners: {
-                        scope: this,
-                        click: function(button, e , eOpts) {
-                            OMV.Rpc.request({
-                                scope: this,
-                                callback: function(id, success, response) {
-                                    OMV.MessageBox.show({
-                                        title: _("Copy in progress"),
-                                        msg: _("Copy operation is progressing in the background.<br />" +
-                                               "Refresh overview tab to see the progress"),
-                                        scope: me,
-                                        buttons: Ext.Msg.OK
-                                    });
-
-                                },
-                                relayErrors: false,
-                                rpcData: {
-                                    service: "Docker",
-                                    method: "copyDockerData",
-                                    params: {
-                                        srcpath: this.getForm().findField("orgpath").getValue(),
-                                        sharedfolderref: this.getForm().findField("destpath").getValue()
-                                    }
-                                }
-                            });
-
-                        }
-                    }
-                }]
+                allowBlank: true
             }]
         },{
             xtype: "fieldset",
@@ -253,9 +127,18 @@ Ext.define("OMV.module.admin.service.docker.Settings", {
                 labelSeparator: ""
             },
             items: [{
+                fieldLabel: "Version",
                 xtype: "textareafield",
-                name: "versionInfo",
+                name: "dockerVersion",
                 readOnly: true,
+                submitValue: false,
+                grow: true
+            },{
+                fieldLabel: "Info",
+                xtype: "textareafield",
+                name: "dockerInfo",
+                readOnly: true,
+                submitValue: false,
                 grow: true
             }]
         },{

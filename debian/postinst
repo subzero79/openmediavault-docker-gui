@@ -5,7 +5,6 @@ set -e
 . /etc/default/openmediavault
 . /usr/share/openmediavault/scripts/helper-functions
 
-
 case "$1" in
   configure)
 
@@ -16,22 +15,25 @@ case "$1" in
     if ! omv_config_exists "/config/services/docker"; then
       echo "Initialize configuration"
       omv_config_add_node "/config/services" "${SERVICE_XPATH_NAME}"
-      omv_config_add_key "${SERVICE_XPATH}" "apiPort" "42005"
       omv_config_add_key "${SERVICE_XPATH}" "sharedfolderref" ""
       omv_config_add_key "${SERVICE_XPATH}" "enabled" "0"
-      omv_config_add_key "${SERVICE_XPATH}" "dockermntent" ""
       omv_config_add_key "${SERVICE_XPATH}" "cwarn" "1"
+    fi
+
+    ### This is because were are shipping an systemd override.
+    systemctl daemon-reload
+
+    if dpkg --compare-versions "$2" "lt-nl" "4.0.2"; then
+      omv-confdbadm migrate "conf.service.docker" "4.0.2"
+      ### info messages for users migrating from tcp to unix socket
+      echo "The plugin no longer uses the docker tcp api port, if you still need this you need to configure it manually by editing /etc/default/docker"
+      echo "Due to changes in the plugin web configuration panel the browser cache needs to be cleared"
     fi
 
     sed -i '/DOCKER_OPTS="$DOCKER_OPTS $OMVDOCKER_API $OMVDOCKER_IMAGE_PATH"/d' /etc/default/docker
 
-    #Update systemd daemon and start the Docker service
-    systemctl stop docker.socket
-    systemctl stop docker
-    systemctl daemon-reload
-    systemctl start docker
 
-    dpkg-trigger update-fixperms
+    dpkg-trigger update-fixperms    
     dpkg-trigger update-locale
 
     ;;

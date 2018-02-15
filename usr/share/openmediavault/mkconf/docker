@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # @license   http://www.gnu.org/licenses/gpl.html GPL Version 3
 # @author    Volker Theile <volker.theile@openmediavault.org>
@@ -19,15 +19,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-set -e
+set -x
 
 . /etc/default/openmediavault
 . /usr/share/openmediavault/scripts/helper-functions
 
 OMV_DOCKER_DM_NAME="conf.service.docker"
-DOCKER_DEFAULT_CONF="/etc/default/docker"
-OMVDOCKER_DEFAULT_CONF_HEADER="### Do not change these lines. They are added and updated by the OMV Docker GUI plugin."
-OMVDOCKER_DEFAULT_CONF_FOOTER="### Do not add any configuration below this line. It will be removed when the plugin is removed"
+OMV_DOCKERDAEMON_JSON_CONF="/etc/docker/daemon.json"
+
 cleanup() {
     rm -f "${tmpfile}"
     exit
@@ -38,13 +37,78 @@ tmpfile=$(mktemp)
 OMV_DOCKER_SHAREDFOLDERREF_UUID=$(omv-confdbadm read ${OMV_DOCKER_DM_NAME} | jq -r '.sharedfolderref')
 OMV_DOCKER_SHAREDFOLDER_PATH=$(omv_get_sharedfolder_path ${OMV_DOCKER_SHAREDFOLDERREF_UUID})
 
-if [ ! -z ${OMV_DOCKER_SHAREDFOLDER_PATH} ];then
-	echo ${OMVDOCKER_DEFAULT_CONF_HEADER} > ${tmpfile}
-	echo "OMVDOCKER_IMAGE_PATH=-g ${OMV_DOCKER_SHAREDFOLDER_PATH}" >> ${tmpfile}
-	echo ${OMVDOCKER_DEFAULT_CONF_FOOTER} >> ${tmpfile}
+
+_check_existing_sockets ()
+{
+	if [ -f "${OMV_DOCKERDAEMON_JSON_CONF}" ]; then
+		dockerjson_tcp_sockets=( $(jq -r 'select(.hosts != null) | .hosts[]|contains("tcp")' ${OMV_DOCKERDAEMON_JSON_CONF}) )
+		if `echo $dockerjson_tcp_sockets | grep "true"`;then
+			dockerTcpSockets=true
+		fi
+	fi
+}
+
+
+### Check wether the current daemon json file is valid or not. If file has incorrect json data will simply remove it and
+### the script will regenerate a new one accordingly. 
+_check_valid_json ()
+{
+	if ! jq -e . >/dev/null 2>&1 <<<"${1}"; then
+		rm -rf "${1}"
+	fi
+}
+
+_check_existing_sockets
+
+### Check if file exists. The daemon.json file does not ship with docker-ce package. Is the standard configuration
+### file for the daemon. The unix socket is not specified here as it runs by default, unless someone adds a tcp host.
+### If someone adds a tcp socket then the daemon will stop listening at the unix socket rendering the plugin unusable.
+### Whenever someone adds a tcp or another unix socket we have to make sure we also add the default /var/run/docker.sock that 
+### the plugin php backend uses.
+
+if [ ! -f ${OMV_DOCKERDAEMON_JSON_CONF} ]; then
+	touch ${OMV_DOCKERDAEMON_JSON_CONF}
 else
-	echo ${OMVDOCKER_DEFAULT_CONF_HEADER} > ${tmpfile}
-	echo ${OMVDOCKER_DEFAULT_CONF_FOOTER} >> ${tmpfile}
+	_check_valid_json "${1}"
 fi
 
-sed -i -e "/${OMVDOCKER_DEFAULT_CONF_HEADER}/r ${tmpfile}" -e "/${OMVDOCKER_DEFAULT_CONF_HEADER}/,/${OMVDOCKER_DEFAULT_CONF_FOOTER}/d" ${DOCKER_DEFAULT_CONF}
+
+if [ ! -s {OMV_DOCKERDAEMON_JSON_CONF} ] && [ ! -z $OMV_DOCKER_SHAREDFOLDERREF_UUID ];then
+	cat << EOF > "${OMV_DOCKERDAEMON_JSON_CONF}"
+{
+  "data-root": "${OMV_DOCKER_SHAREDFOLDER_PATH}"
+}
+EOF
+elif [ ! -s ${OMV_DOCKERDAEMON_JSON_CONF} ] && [ -z $OMV_DOCKER_SHAREDFOLDERREF_UUID ]; then
+	cat << EOF > "${OMV_DOCKERDAEMON_JSON_CONF}"
+{
+}
+EOF
+### If file exists add the relevant keys (unix socket and data-root directory) to daemon.json, without altering current configurations. 
+### This is relevant for users that want to keep daemon listening in a tcp socket, or add a debug flag, etc.
+elif [ -f ${OMV_DOCKERDAEMON_JSON_CONF} ] && [ ! -z $OMV_DOCKER_SHAREDFOLDERREF_UUID ]; then
+	if [[ "${dockerTcpSockets}" == "true" ]];then
+		jq -r --arg dataroot ${OMV_DOCKER_SHAREDFOLDER_PATH} \
+			'.hosts|= (. + ["unix:///var/run/docker.sock"]| unique)|. + {"data-root":$dataroot}' \
+			${OMV_DOCKERDAEMON_JSON_CONF} > ${tmpfile}
+		cat $tmpfile > $OMV_DOCKERDAEMON_JSON_CONF
+	else
+		jq -r --arg dataroot ${OMV_DOCKER_SHAREDFOLDER_PATH} \
+			'. + {"data-root":$dataroot}' \
+			${OMV_DOCKERDAEMON_JSON_CONF} > ${tmpfile}
+		cat $tmpfile > $OMV_DOCKERDAEMON_JSON_CONF
+	fi
+elif [ -f ${OMV_DOCKERDAEMON_JSON_CONF} ] && [ -z $OMV_DOCKER_SHAREDFOLDERREF_UUID ]; then
+	if [[ "${dockerTcpSockets}" == "true" ]];then
+		jq -r ${OMV_DOCKER_SHAREDFOLDER_PATH} \
+			'.hosts|= (. + ["unix:///var/run/docker.sock"]| unique)|del(."data-root")' \
+			${OMV_DOCKERDAEMON_JSON_CONF} > ${tmpfile}
+		cat $tmpfile > $OMV_DOCKERDAEMON_JSON_CONF
+	else
+		jq -r ${OMV_DOCKER_SHAREDFOLDER_PATH} \
+			'del(."data-root")' \
+			${OMV_DOCKERDAEMON_JSON_CONF} > ${tmpfile}
+		cat $tmpfile > $OMV_DOCKERDAEMON_JSON_CONF
+	fi
+
+fi

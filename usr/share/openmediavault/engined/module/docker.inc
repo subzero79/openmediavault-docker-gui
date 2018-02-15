@@ -37,4 +37,5 @@ class OMVModuleDocker extends \OMV\Engine\Module\ServiceAbstract
             'running' => $systemCtl->isActive()
         );
     }
+
 }

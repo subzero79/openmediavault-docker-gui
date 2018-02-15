@@ -1201,16 +1201,13 @@ class OMVRpcServiceDocker extends ServiceAbstract
                 );
                 $sharedFolder = $params['sharedfolderref'];
             }
-            OMVModuleDockerUtil::changeDockerSettings($context, $absPath);
+            OMVModuleDockerUtil::changeDockerSettings($context, $params);
         }
-
-        //Get the possibly changed settings object
-        $oldSettings = $this->database->getAssoc($this->dataModelPath);
 
         // Update the configuration object.
         $object = array(
             "enabled" => array_boolval($params, "enabled"),
-            "sharedfolderref" => $sharedFolder,
+            "sharedfolderref" => $params['sharedfolderref'],
             "cwarn" => array_boolval($params, "cwarn")
         );
 

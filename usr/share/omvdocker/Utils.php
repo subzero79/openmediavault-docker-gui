@@ -514,64 +514,24 @@ class OMVModuleDockerUtil
      * @return void
      *
      */
-    public static function changeDockerSettings($context, $absPath)
+    public static function changeDockerSettings($context, $params)
     {
         self::$database = Database::getInstance();
         OMVModuleDockerUtil::stopDockerService();
 
-        //Do some sanity checks before making changes to running config.
-
-        //First check that there is no manual base path relocation in the file
-        //Second update /etc/default/docker with user provided data
-        // /etc/default/docker
-        $fileName = "/etc/default/docker";
-        $data = file_get_contents($fileName);
-        $lines = explode("\n", $data);
-        foreach ($lines as $line) {
-            if (strcmp($line, "### Do not change these lines. They are added and updated by the OMV Docker GUI plugin.") === 0) {
-                break;
-            } elseif ((preg_match('/^[^\#]+.*\-g[\s]?([^\"]+)[\s]?.*/', $line, $matches)) && (strcmp($absPath, "") !== 0)) {
-                OMVModuleDockerUtil::startDockerService();
-                throw new OMVModuleDockerException(
-                    "Docker " .
-                    "base path relocation detected in " .
-                    "configuration file\n" .
-                    "Please remove it manually " .
-                    "($matches[1])\n"
-                );
-            }
-            $result .= $line . "\n";
-        }
-
-        // Next get the old settings object
-        $oldSettings = self::$database->getAssoc(self::$dataModelPath);
-
-        $result = rtrim($result);
-        $result .= "\n\n" . '### Do not change these lines. They are added ' .
-            'and updated by the OMV Docker GUI plugin.' . "\n";
-        if (strcmp($absPath, "") !==0) {
-            $result .= 'OMVDOCKER_IMAGE_PATH="-g ' . $absPath . '"' . "\n";
-        } else {
-            $result .= 'OMVDOCKER_IMAGE_PATH=""' . "\n";
-        }
-        $result .= '### Do not add any configuration below this line. It will be ' .
-            'removed when the plugin is removed';
-        file_put_contents("$fileName", $result);
-
-        //Update settings object
-        if (strcmp($absPath, "") === 0) {
-            $tmpMntent = "";
-        } else {
-            $tmpMntent = $newMntent['uuid'];
-        }
         $object = array(
-            "enabled" => $oldSettings['enabled'],
-            "sharedfolderref" => $oldSettings['sharedfolderref']
+            "enabled" => array_boolval($params, "enabled"),
+            "sharedfolderref" => $params['sharedfolderref'],
+            "cwarn" => array_boolval($params, "cwarn")
         );
 
         $config = new ConfigObject(self::$dataModelPath);
         $config->setAssoc($object);
         self::$database->set($config);
+
+        $cmd = new \OMV\System\Process("omv-mkconf", "docker");
+        $cmd->setRedirect2to1();
+        $cmd->execute();
 
         OMVModuleDockerUtil::startDockerService();
     }

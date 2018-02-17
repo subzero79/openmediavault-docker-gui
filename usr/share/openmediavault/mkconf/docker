@@ -49,6 +49,15 @@ _check_existing_sockets ()
 }
 
 
+### Check wether the current daemon json file is valid or not. If file has incorrect json data will simply remove it and
+### the script will regenerate a new one accordingly. 
+_check_valid_json ()
+{
+	if ! jq -e . >/dev/null 2>&1 <<<"${1}"; then
+		rm -rf "${1}"
+	fi
+}
+
 _check_existing_sockets
 
 ### Check if file exists. The daemon.json file does not ship with docker-ce package. Is the standard configuration
@@ -59,6 +68,8 @@ _check_existing_sockets
 
 if [ ! -f ${OMV_DOCKERDAEMON_JSON_CONF} ]; then
 	touch ${OMV_DOCKERDAEMON_JSON_CONF}
+else
+	_check_valid_json "${1}"
 fi
 
 
@@ -74,7 +85,7 @@ elif [ ! -s ${OMV_DOCKERDAEMON_JSON_CONF} ] && [ -z $OMV_DOCKER_SHAREDFOLDERREF_
 }
 EOF
 ### If file exists add the relevant keys (unix socket and data-root directory) to daemon.json, without altering current configurations. 
-### This is relevant for users that want to keep daemon listening in tcp socket, or add a debug flag, etc.
+### This is relevant for users that want to keep daemon listening in a tcp socket, or add a debug flag, etc.
 elif [ -f ${OMV_DOCKERDAEMON_JSON_CONF} ] && [ ! -z $OMV_DOCKER_SHAREDFOLDERREF_UUID ]; then
 	if [[ "${dockerTcpSockets}" == "true" ]];then
 		jq -r --arg dataroot ${OMV_DOCKER_SHAREDFOLDER_PATH} \

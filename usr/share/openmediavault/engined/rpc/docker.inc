@@ -1185,22 +1185,9 @@ class OMVRpcServiceDocker extends ServiceAbstract
         $oldsharedFolder = $oldSettings['sharedfolderref'];
         $sharedFolder = $params['sharedfolderref'];
 
-//      This will check that if the plugin is enabled and the shared folder reference is different from the current one, will regenerate /etc/default/docker
-//      and restart the daemon. This will prevent restart of the daemon if the user changes the container modification warning setting.
+//      This will check that if the plugin is enabled and the shared folder reference is different from the current one, will regenerate /etc/docker/daemon.json
+//      and restart the dockerd. This will prevent restart of the dockerd if the user changes the container modification warning setting.
         if ($params['enabled'] && !(strcmp($params['sharedfolderref'], $oldsharedFolder) === 0)) {
-            $absPath = "";
-            $sharedFolder = "";
-            if (!(strcmp($params['sharedfolderref'], "") === 0)) {
-                $absPath = Rpc::call(
-                    "ShareMgmt",
-                    "getPath",
-                    array(
-                        "uuid" => $params['sharedfolderref']
-                    ),
-                    $context
-                );
-                $sharedFolder = $params['sharedfolderref'];
-            }
             OMVModuleDockerUtil::changeDockerSettings($context, $params);
         }
 

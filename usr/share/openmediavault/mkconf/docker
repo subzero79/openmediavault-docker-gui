@@ -48,19 +48,14 @@ _check_existing_sockets ()
 	fi
 }
 
-# dockerTcpSockets="true"
 
 _check_existing_sockets
-##jq -r '.hosts|= (. + ["unix:///var/run/docker.sock"]| unique)' /etc/docker/daemon.json
-
-## jq -r '. + {"data-root":"/srv/dev-disk-by-label-docker/DockerData"}' /etc/docker/daemon.json
-#.hosts|= (. + ["unix:///var/run/docker.sock"]| unique)|. + {"data-root":"/srv/dev-disk-by-label-docker/DockerData"}
-
-## .hosts[]|contains("tcp")
 
 ### Check if file exists. The daemon.json file does not ship with docker-ce package. Is the standard configuration
-### file for the daemon. ### The unix socket is not specified here as it runs by default, unless someone adds a tcp host.
+### file for the daemon. The unix socket is not specified here as it runs by default, unless someone adds a tcp host.
 ### If someone adds a tcp socket then the daemon will stop listening at the unix socket rendering the plugin unusable.
+### Whenever someone adds a tcp or another unix socket we have to make sure we also add the default /var/run/docker.sock that 
+### the plugin php backend uses.
 
 if [ ! -f ${OMV_DOCKERDAEMON_JSON_CONF} ]; then
 	touch ${OMV_DOCKERDAEMON_JSON_CONF}
@@ -79,7 +74,7 @@ elif [ ! -s ${OMV_DOCKERDAEMON_JSON_CONF} ] && [ -z $OMV_DOCKER_SHAREDFOLDERREF_
 }
 EOF
 ### If file exists add the relevant keys (unix socket and data-root directory) to daemon.json, without altering current configurations. 
-### This is relevant for users that want to keep daemon listening in tcp socket
+### This is relevant for users that want to keep daemon listening in tcp socket, or add a debug flag, etc.
 elif [ -f ${OMV_DOCKERDAEMON_JSON_CONF} ] && [ ! -z $OMV_DOCKER_SHAREDFOLDERREF_UUID ]; then
 	if [[ "${dockerTcpSockets}" == "true" ]];then
 		jq -r --arg dataroot ${OMV_DOCKER_SHAREDFOLDER_PATH} \

@@ -428,7 +428,9 @@ Ext.define("OMV.module.admin.service.docker.ImageGrid", {
                     name: "details",
                     grow: false,
                     height: 620,
-                    readOnly: true,
+                    editable: false,
+                    grow: true,
+                    cls: "x-form-textarea-monospaced",
                     fieldStyle: {
                         fontFamily: "courier",
                         fontSize: "12px"

@@ -584,7 +584,9 @@ Ext.define("OMV.module.admin.service.docker.ContainerGrid", {
                     name: "details",
                     grow: false,
                     height: 620,
-                    readOnly: true,
+                    editable: false,
+                    grow: true,
+                    cls: "x-form-textarea-monospaced",
                     fieldStyle: {
                         fontFamily: "courier",
                         fontSize: "12px"
@@ -618,17 +620,16 @@ Ext.define("OMV.module.admin.service.docker.ContainerGrid", {
                 var me = this;
 
                 return [{
-                    // xtype: "textareafield",
                     xtype: "textarea",
                     name: "logs",
                     grow: false,
+                    editable: false,
                     height: 620,
-                    readOnly: true,
-                    cls: "x-form-textarea-monospaced"
-//                    fieldStyle: {
-  //                      fontFamily: "courier",
-    //                    fontSize: "12px"
-      //              }
+                    cls: "x-form-textarea-monospaced",
+                    fieldStyle: {
+                       fontFamily: "courier",
+                       fontSize: "12px"
+                    }
                 }];
             }
         }).show();

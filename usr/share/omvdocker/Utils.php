@@ -647,12 +647,8 @@ class OMVModuleDockerUtil
         //  This is to avoid hammering the api with individual calls for low-level container info, because
         //  "http::/containers/json?all=1"" does not return this information. This can cause slowness in the grid
         //  rendering.
-        $logpath = "$datarootpath" . 
-            "/" . "containers" . "/" .
-            $cid . 
-            "/" . 
-            $cid .
-            "-json.log" ;
+        $logpath = sprintf("%s/containers/%s/%s-json.log", 
+            $datarootpath, $cid, $cid);
         // Check if file exists. In some cases the log file does not exist. Data containers or some stack deploys
         if (file_exists($logpath)) {
             $logfilesize = filesize($logpath);

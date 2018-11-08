@@ -36,7 +36,8 @@ clean_docker_mount_bind () {
 }
 
 ### Stop the docker daemon
-systemctl stop docker.socket
+systemctl stop docker.socket || :
+systemctl stop containerd || :
 systemctl stop docker
 
 ### After this section we need to remove fstab entries and unmount any old binds

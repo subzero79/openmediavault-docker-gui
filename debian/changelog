@@ -1,4 +1,16 @@
-openmediavault-docker-gui (4.0.2) zesty; urgency=medium
+openmediavault-docker-gui (4.0.4) stable; urgency=low
+
+  * Update for docker-ce 2018.09 and containerd
+
+ -- OpenMediaVault Plugin Developers <plugins@omv-extras.org>  Thu, 08 Nov 2018 08:02:56 -0600
+
+openmediavault-docker-gui (4.0.3) stable; urgency=low
+
+  * Improve plugin uninstall
+
+ -- OpenMediaVault Plugin Developers <plugins@omv-extras.org>  Sat, 29 Sep 2018 06:41:41 -0500
+
+openmediavault-docker-gui (4.0.2) stable; urgency=medium
 
   * Fix for broken logo URLs
 

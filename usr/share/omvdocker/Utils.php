@@ -89,12 +89,10 @@ class OMVModuleDockerUtil
     {
         do {
             //Wait for the docker service to stop before making config changes
-            $systemCtl = new SystemCtl("docker.socket");
+            $systemCtl = new SystemCtl("docker");
             $systemCtl->stop();
-            $systemCtl2 = new SystemCtl("docker");
-            $systemCtl2->stop();
             sleep(1);
-        } while ($systemCtl->isActive() || $systemCtl2->isActive());
+        } while ($systemCtl->isActive());
     }
 
     /**
@@ -105,9 +103,10 @@ class OMVModuleDockerUtil
     public static function startDockerService()
     {
         //Start the daemon again after changes have been made
+        $systemCtl = new SystemCtl("containerd");
+        $systemCtl->start();
         $systemCtl = new SystemCtl("docker");
         $systemCtl->start();
-
     }
 
     /**
@@ -310,14 +309,14 @@ class OMVModuleDockerUtil
 
     /**
      * Returns an array with Containers for presentation in grid
-     * 
+     *
      * @param string $datarootpath Docker data root directory from openmediavault docker settings
      * @return array $objects An array with Container objects
      *
      */
     public static function getContainerList($datarootpath)
     {
-        
+
         $objects = array();
         $now = date("c");
         $url = "http::/containers/json?all=1";
@@ -643,11 +642,11 @@ class OMVModuleDockerUtil
         if (empty($datarootpath)) {
             $datarootpath = "/var/lib/docker";
         }
-        //  Construct the log path based on the ID of the container. 
+        //  Construct the log path based on the ID of the container.
         //  This is to avoid hammering the api with individual calls for low-level container info, because
         //  "http::/containers/json?all=1"" does not return this information. This can cause slowness in the grid
         //  rendering.
-        $logpath = sprintf("%s/containers/%s/%s-json.log", 
+        $logpath = sprintf("%s/containers/%s/%s-json.log",
             $datarootpath, $cid, $cid);
         // Check if file exists. In some cases the log file does not exist. Data containers or some stack deploys
         if (file_exists($logpath)) {

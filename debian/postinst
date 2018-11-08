@@ -30,10 +30,11 @@ case "$1" in
       echo "Due to changes in the plugin web configuration panel the browser cache needs to be cleared"
     fi
 
+    touch /etc/default/docker
+
     sed -i '/DOCKER_OPTS="$DOCKER_OPTS $OMVDOCKER_API $OMVDOCKER_IMAGE_PATH"/d' /etc/default/docker
 
-
-    dpkg-trigger update-fixperms    
+    dpkg-trigger update-fixperms
     dpkg-trigger update-locale
 
     ;;

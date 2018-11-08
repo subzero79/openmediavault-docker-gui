@@ -1,4 +1,4 @@
-openmediavault-docker-gui (4.0.4) stable; urgency=low
+openmediavault-docker-gui (4.1) stable; urgency=low
 
   * Update for docker-ce 2018.09 and containerd
 

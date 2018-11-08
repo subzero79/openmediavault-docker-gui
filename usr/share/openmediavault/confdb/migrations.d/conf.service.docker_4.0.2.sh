@@ -35,8 +35,10 @@ clean_docker_mount_bind () {
   omv-mkconf fstab
 }
 
+echo "The plugin no longer uses the docker tcp api port, if you still need this you need to configure it manually by editing /etc/default/docker"
+echo "Due to changes in the plugin web configuration panel the browser cache needs to be cleared"
+
 ### Stop the docker daemon
-systemctl stop docker.socket || :
 systemctl stop containerd || :
 systemctl stop docker
 
@@ -50,7 +52,7 @@ OMV_DOCKER_BIND_MOUNT_UUID=$(omv-confdbadm read ${OMV_FSTAB_DM_NAME} | \
 ### if the uuid bind exists in the database then we proceed
 if [ ! -z "$OMV_DOCKER_BIND_MOUNT_UUID" ] ;then
 	echo "There is an alternate Docker root directory defined in the plugin and is mounted, proceeding to unmount..."
-### Check if mounted
+    # Check if mounted
   	if mountpoint -q -- "${OMV_DOCKER_BIND_MOUNT}"; then
     	echo "Unmounting ${OMV_DOCKER_BIND_MOUNT}"
     	umount -f -l "${OMV_DOCKER_BIND_MOUNT}"
@@ -64,7 +66,6 @@ else
 fi
 
 ### Delete old deprecated database entries
-
 if omv_config_exists "${SERVICE_XPATH}/apiPort"; then
     omv_config_delete "${SERVICE_XPATH}/apiPort"
 fi
@@ -98,5 +99,7 @@ fi
 echo "Regenerating the plugin settings for docker root directory in /etc/default/docker"
 omv-mkconf docker
 
-### Start the docker daemon 
+sed -i '/DOCKER_OPTS="$DOCKER_OPTS $OMVDOCKER_API $OMVDOCKER_IMAGE_PATH"/d' /etc/default/docker
+
+### Start the docker daemon
 systemctl start docker

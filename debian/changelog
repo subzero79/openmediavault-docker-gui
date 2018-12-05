@@ -1,6 +1,7 @@
 openmediavault-docker-gui (4.1.1) stable; urgency=low
 
   * touch /etc/default/docker
+  * Update locales
 
  -- OpenMediaVault Plugin Developers <plugins@omv-extras.org>  Wed, 05 Dec 2018 07:25:01 -0600
 

@@ -3,14 +3,15 @@
 # This file is distributed under the same license as the PACKAGE package.
 # 
 # Translators:
+# Allure R <Riseup@live.cn>, 2018
 # songming <by@songming.me>, 2015
 msgid ""
 msgstr ""
 "Project-Id-Version: openmediavault-docker-gui\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-08-24 05:54-0500\n"
-"PO-Revision-Date: 2017-09-22 13:39+0000\n"
-"Last-Translator: songming <by@songming.me>\n"
+"PO-Revision-Date: 2018-05-20 17:52+0000\n"
+"Last-Translator: Allure R <Riseup@live.cn>\n"
 "Language-Team: Chinese (China) (http://www.transifex.com/openmediavault-plugin-developers/openmediavault-docker-gui/language/zh_CN/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -19,7 +20,7 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 
 msgid "Bad input"
-msgstr ""
+msgstr "输入错误"
 
 msgid "Bind mounts"
 msgstr "绑定挂载"

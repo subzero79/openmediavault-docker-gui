@@ -1,0 +1,5 @@
+#!/bin/sh
+
+touch /etc/default/docker
+
+exit 0
